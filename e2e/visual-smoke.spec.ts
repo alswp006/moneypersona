@@ -10,17 +10,48 @@ import { test, expect, type Page } from "@playwright/test";
  *   1) ROUTES에 핵심 화면을 추가(폼/결과/목록/설정 등)
  *   2) 데이터가 필요한 화면은 seed()에서 localStorage를 채워라
  */
+// 앱의 8개 라우트 전부 + 정의되지 않은 경로(홈으로 replace되는지 확인)
 const ROUTES: { path: string; name: string }[] = [
   { path: "/", name: "home" },
   { path: "/quiz/5", name: "quiz-step" },
-  // { path: "/result", name: "result" },   // ← 이 앱의 라우트를 추가
-  // { path: "/settings", name: "settings" },
+  { path: "/quiz/calculating", name: "quiz-calculating" },
+  { path: "/result", name: "result" },
+  { path: "/report", name: "report" },
+  { path: "/share", name: "share" },
+  { path: "/compat", name: "compat" },
+  { path: "/history", name: "history" },
+  { path: "/foo", name: "unknown-path-redirects-home" },
 ];
 
-/** 데이터가 필요한 화면용 localStorage 시드(앱에 맞게 채워라). 앱 스크립트보다 먼저 실행된다. */
+/** 데이터가 필요한 화면용 localStorage 시드. 앱 스크립트보다 먼저 실행된다. */
 async function seed(page: Page): Promise<void> {
   await page.addInitScript(() => {
-    // window.localStorage.setItem("MY_STORAGE_KEY", JSON.stringify({ /* ... */ }));
+    // 기록 화면이 빈 상태가 아닌 실제 목록으로 보이도록 진단 결과 2건을 넣는다.
+    // (퀴즈 draft는 넣지 않는다 — 넣으면 /quiz/calculating이 즉시 결과로 넘어가 화면을 못 본다.)
+    const results = [
+      {
+        version: 1,
+        id: "r_1734500000000_a1b2",
+        personaId: "TPS",
+        scores: { spend: 3, plan: 3, risk: 1 },
+        answers: [1, 1, 1, 0, 1, 1, 1, 0, 0, 1, 0, 0],
+        code: "TPSA1",
+        createdAt: 1734500000000,
+        reportUnlocked: false,
+      },
+      {
+        version: 1,
+        id: "r_1734300000000_c3d4",
+        personaId: "FIR",
+        scores: { spend: 1, plan: 1, risk: 4 },
+        answers: [0, 0, 1, 0, 0, 1, 0, 0, 1, 1, 1, 1],
+        code: "FIRC3",
+        createdAt: 1734300000000,
+        reportUnlocked: false,
+      },
+    ];
+    window.localStorage.setItem("mp.result.history", JSON.stringify(results));
+    window.localStorage.setItem("mp.result.latest", JSON.stringify(results[0]));
   });
 }
 

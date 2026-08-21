@@ -16,7 +16,13 @@ import React from "react";
 import { vi } from "vitest";
 
 export const mockNavigate = vi.fn();
-export const mockLocation = { pathname: "/", search: "", state: null, key: "default" };
+/**
+ * useLocation 강제 override용 — pathname을 채우면 그 값이 쓰이고,
+ * 비워두면(기본) MemoryRouter의 실제 위치가 그대로 쓰인다.
+ * (기본값을 "/"로 고정해두면 initialEntries가 무시돼 현재 경로에 의존하는 UI —
+ *  예: 하단 탭 활성표시 — 를 테스트할 수 없다.)
+ */
+export const mockLocation = { pathname: "", search: "", state: null, key: "default" };
 
 // ── TDS (@toss/tds-mobile) ──
 // TDS components use CSS-in-JS + layout hooks that crash in jsdom.
@@ -73,8 +79,12 @@ export function mockTds() {
         ? React.createElement("div", { role: "status", "data-position": position }, text)
         : null,
 
+    // NOTE: 컨테이너에 role="tablist"를 주지 않는다. 하단 네비(FloatingTabBar)가
+    // nav[role=tablist]라서, 콘텐츠 전환용 Tab까지 tablist면 같은 화면에 tablist가
+    // 둘이 되어 getByRole("tablist")가 "여러 개 매칭"으로 터진다. 탭 항목(Tab.Item)은
+    // 그대로 role="tab"이므로 getByRole("tab", { name }) 조회는 영향받지 않는다.
     Tab: Object.assign(
-      ({ children }: any) => React.createElement("div", { role: "tablist" }, children),
+      ({ children }: any) => React.createElement("div", { "data-slot": "tabs" }, children),
       {
         Item: ({ children, selected, onClick }: any) =>
           React.createElement(
@@ -122,14 +132,13 @@ export function mockTds() {
         ),
     ),
 
+    // NOTE: title을 <h1>으로 한 번 더 감싸지 않는다. 실제 사용법이
+    // <Top title={<Top.TitleParagraph>제목</Top.TitleParagraph>} />라서 감싸면
+    // <h1><h1>이 되고 React가 validateDOMNesting 경고를 console.error로 찍는다
+    // (검수 기준: 콘솔 에러 0건 — 테스트가 이걸 잡아내야 한다).
     Top: Object.assign(
       ({ children, title }: any) =>
-        React.createElement(
-          "nav",
-          { role: "navigation" },
-          title && React.createElement("h1", null, title),
-          children,
-        ),
+        React.createElement("nav", { role: "navigation" }, title, children),
       {
         TitleParagraph: ({ children }: any) => React.createElement("h1", null, children),
       },
@@ -305,7 +314,10 @@ export function mockRouter() {
     return {
       ...actual,
       useNavigate: () => mockNavigate,
-      useLocation: () => mockLocation,
+      useLocation: () => {
+        const real = actual.useLocation();
+        return mockLocation.pathname ? mockLocation : real;
+      },
     };
   });
 }
