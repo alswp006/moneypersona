@@ -12,6 +12,7 @@ import { test, expect, type Page } from "@playwright/test";
  */
 const ROUTES: { path: string; name: string }[] = [
   { path: "/", name: "home" },
+  { path: "/quiz/5", name: "quiz-step" },
   // { path: "/result", name: "result" },   // ← 이 앱의 라우트를 추가
   // { path: "/settings", name: "settings" },
 ];

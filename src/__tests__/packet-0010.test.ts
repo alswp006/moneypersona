@@ -29,19 +29,23 @@ vi.mock("react-router-dom", async () => {
 });
 
 // ── QUESTIONS 상수 mock (12문항, axis 4/4/4, options A/B) ──
-const MOCK_QUESTIONS: Question[] = Array.from({ length: 12 }, (_, i) => {
-  const id = i + 1;
-  const axis: Question["axis"] = id <= 4 ? "spend" : id <= 8 ? "plan" : "risk";
-  return {
-    id,
-    axis,
-    text: `문항 ${id}번 — 이 상황에서 나는 어떻게 행동할까 고민한다`,
-    options: [
-      { key: "A", label: `A안 선택지 ${id}`, value: 1 },
-      { key: "B", label: `B안 선택지 ${id}`, value: 0 },
-    ],
-  };
-});
+// vi.hoisted: vi.mock 팩토리는 import보다 먼저 평가되므로, 팩토리가 즉시 참조하는
+// 값은 vi.hoisted로 감싸야 TDZ("Cannot access before initialization") 없이 안전하다.
+const MOCK_QUESTIONS: Question[] = vi.hoisted(() =>
+  Array.from({ length: 12 }, (_, i) => {
+    const id = i + 1;
+    const axis = id <= 4 ? "spend" : id <= 8 ? "plan" : "risk";
+    return {
+      id,
+      axis,
+      text: `문항 ${id}번 — 이 상황에서 나는 어떻게 행동할까 고민한다`,
+      options: [
+        { key: "A", label: `A안 선택지 ${id}`, value: 1 },
+        { key: "B", label: `B안 선택지 ${id}`, value: 0 },
+      ],
+    };
+  }),
+);
 
 vi.mock("@/domain/questions", () => ({ QUESTIONS: MOCK_QUESTIONS }));
 
