@@ -9,11 +9,14 @@ import type { QuizResult, Persona } from '@/lib/types';
 const CANVAS_WIDTH = 1080;
 const CANVAS_HEIGHT = 1350;
 
-const COLOR_BG = '#F2F4F6';
-const COLOR_TITLE = '#191F28';
-const COLOR_SUB = '#4E5968';
-const COLOR_MUTED = '#8B95A1';
-const COLOR_ACCENT = '#3182F6';
+// Canvas 2D의 fillStyle은 CSS 변수를 못 읽는다(var(--adaptive*) → 무시되고 검정으로 그려짐).
+// 게다가 이 결과물은 화면이 아니라 **내보내는 PNG**라 다크모드가 적용되지 않는다 —
+// 라이트 톤 고정이 맞다. 화면(.tsx/.css)의 하드코딩 색은 여전히 금지다.
+const COLOR_BG = '#F2F4F6'; // compliance-allow: no-hardcoded-hex — Canvas fillStyle은 CSS 변수 미지원
+const COLOR_TITLE = '#191F28'; // compliance-allow: no-hardcoded-hex — 동일
+const COLOR_SUB = '#4E5968'; // compliance-allow: no-hardcoded-hex — 동일
+const COLOR_MUTED = '#8B95A1'; // compliance-allow: no-hardcoded-hex — 동일
+const COLOR_ACCENT = '#3182F6'; // compliance-allow: no-hardcoded-hex — 동일
 
 export async function renderResultImage(result: QuizResult, persona: Persona): Promise<Blob> {
   const canvas = document.createElement('canvas');
@@ -62,6 +65,7 @@ async function canvasToPngBlob(canvas: HTMLCanvasElement): Promise<Blob> {
   }
 
   const dataUrl = canvas.toDataURL('image/png');
+  // compliance-allow: no-network-request — data: URL → Blob 변환(toBlob 미지원 폴백). 네트워크 미발생
   const response = await fetch(dataUrl);
   return response.blob();
 }
