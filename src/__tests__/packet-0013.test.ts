@@ -17,10 +17,46 @@ import fs from "fs";
 import path from "path";
 import React from "react";
 import { render, screen, fireEvent } from "@testing-library/react";
-import { mockTds, mockRouter } from "@/__tests__/__helpers__/mocks";
 
-mockTds();
-mockRouter();
+// NOTE: 이 파일은 loadFullScreenAd/showFullScreenAd의 onEvent/onError를 테스트별로
+// 직접 제어해야 하므로 공용 mockAppsInToss()(onEvent 즉시 자동 발화)를 쓸 수 없다.
+// 공용 __helpers__/mocks.ts를 import만 해도(mockTds/mockRouter만 쓰더라도) 그 파일 안의
+// vi.mock("@apps-in-toss/web-framework", ...)이 (함수 내부에 있어도) 이 파일의 vi.mock
+// 호이스팅과 충돌해 아래 커스텀 mock을 덮어써 버린다(loadFullScreenAd가 이 파일의 vi.fn()과
+// 다른 인스턴스로 연결됨) — 그래서 TDS/router mock을 이 파일에 인라인한다.
+vi.mock("@toss/tds-mobile", () => ({
+  Button: ({ children, onClick, ...props }: any) =>
+    React.createElement("button", { onClick, ...props }, children),
+  Spacing: ({ size }: any) => React.createElement("div", { "data-spacing": size }),
+  Paragraph: {
+    Text: ({ children, typography, ...props }: any) =>
+      React.createElement("span", { "data-typography": typography, ...props }, children),
+  },
+  Toast: ({ open, text, position }: any) =>
+    open ? React.createElement("div", { role: "status", "data-position": position }, text) : null,
+  Asset: {
+    ContentIcon: ({ name, alt }: any) =>
+      React.createElement("span", { "data-content-icon": name, role: "img", "aria-label": alt ?? name }),
+  },
+  ListRow: Object.assign(
+    ({ children, onClick, ...props }: any) =>
+      React.createElement("div", { onClick, role: "listitem", ...props }, children),
+    {
+      Texts: ({ top, bottom, type }: any) =>
+        React.createElement(
+          React.Fragment,
+          null,
+          React.createElement("span", { "data-type": type, "data-slot": "top" }, top),
+          React.createElement("span", { "data-slot": "bottom" }, bottom),
+        ),
+    },
+  ),
+}));
+
+vi.mock("react-router-dom", async () => {
+  const actual = await vi.importActual<typeof import("react-router-dom")>("react-router-dom");
+  return { ...actual, useNavigate: () => vi.fn() };
+});
 
 const loadFullScreenAd = vi.fn();
 const showFullScreenAd = vi.fn();
@@ -61,11 +97,11 @@ describe("리포트 부품 — 리워드 광고 게이트 · 3축 코멘트/액�
   it("AC-1[P0]: reportUnlocked=false면 잠금 안내와 전체폭 버튼만 보이고 ReportContent는 렌더되지 않는다", () => {
     const onUnlock = vi.fn();
     render(
-      React.createElement(
-        ReportGate,
-        { reportUnlocked: false, onUnlock },
-        React.createElement(LockedChildMarker),
-      ),
+      React.createElement(ReportGate, {
+        reportUnlocked: false,
+        onUnlock,
+        children: React.createElement(LockedChildMarker),
+      }),
     );
 
     const watchButton = screen.getByRole("button", { name: "광고 보고 리포트 열기" });
@@ -85,11 +121,11 @@ describe("리포트 부품 — 리워드 광고 게이트 · 3축 코멘트/액�
 
     const onUnlock = vi.fn();
     render(
-      React.createElement(
-        ReportGate,
-        { reportUnlocked: false, onUnlock },
-        React.createElement(LockedChildMarker),
-      ),
+      React.createElement(ReportGate, {
+        reportUnlocked: false,
+        onUnlock,
+        children: React.createElement(LockedChildMarker),
+      }),
     );
 
     fireEvent.click(screen.getByRole("button", { name: "광고 보고 리포트 열기" }));
@@ -108,11 +144,11 @@ describe("리포트 부품 — 리워드 광고 게이트 · 3축 코멘트/액�
 
     const onUnlock = vi.fn();
     render(
-      React.createElement(
-        ReportGate,
-        { reportUnlocked: false, onUnlock },
-        React.createElement(LockedChildMarker),
-      ),
+      React.createElement(ReportGate, {
+        reportUnlocked: false,
+        onUnlock,
+        children: React.createElement(LockedChildMarker),
+      }),
     );
 
     expect(screen.getByText("광고를 불러오지 못했어요")).toBeInTheDocument();
@@ -132,11 +168,11 @@ describe("리포트 부품 — 리워드 광고 게이트 · 3축 코멘트/액�
 
     const onUnlock = vi.fn();
     render(
-      React.createElement(
-        ReportGate,
-        { reportUnlocked: false, onUnlock },
-        React.createElement(LockedChildMarker),
-      ),
+      React.createElement(ReportGate, {
+        reportUnlocked: false,
+        onUnlock,
+        children: React.createElement(LockedChildMarker),
+      }),
     );
 
     fireEvent.click(screen.getByRole("button", { name: "광고 보고 리포트 열기" }));
@@ -172,11 +208,11 @@ describe("리포트 부품 — 리워드 광고 게이트 · 3축 코멘트/액�
     loadFullScreenAd.mockImplementation(() => {});
 
     render(
-      React.createElement(
-        ReportGate,
-        { reportUnlocked: false, onUnlock: vi.fn() },
-        React.createElement(LockedChildMarker),
-      ),
+      React.createElement(ReportGate, {
+        reportUnlocked: false,
+        onUnlock: vi.fn(),
+        children: React.createElement(LockedChildMarker),
+      }),
     );
 
     expect(loadFullScreenAd).toHaveBeenCalledWith(
