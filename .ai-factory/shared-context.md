@@ -325,6 +325,10 @@ CRITICAL: Before creating any new function, type, or component, check the list a
 - 0010: 퀴즈 화면 (`/quiz/:step`) — 문항 렌더 · 진행률 · 진입 가드 (files: src/pages/Quiz.tsx)
 - 0011: 계산 화면 (`/quiz/calculating`) — 1,200ms 연출 · 결과 생성 및 저장 (files: src/pages/Calculating.tsx)
 - 0019: 라우터 배선 · FloatingTabBar 노출 규칙 · catch-all 가드 (files: src/App.tsx, src/routes/routes.tsx)
+- 0020: 검수 컴플라이언스 정적 검증 스크립트 · 다크모드 · 구형 OS 호환 (files: scripts/verify-compliance.mjs, package.json, vite.config.ts)
+
+## TDD 상태
+⚠️ TDD 테스트 파일 자동 작성에 실패했습니다. 소스 코드를 작성하기 전에 `src/__tests__/packet-XXXX.test.ts` 파일에 AC 기반 테스트를 먼저 작성하세요 (TDD red phase). 테스트 작성 후 구현하세요.
 
 ## Available exports from existing files
 // src/App.tsx
@@ -392,15 +396,13 @@ export function TossRewardAd({
 export function makeCode(personaId: PersonaId): string {
 export function parseCode(code: string): PersonaId | null {
 
-// src/domain/questions.ts
-export const QUESTIONS: Question[] = [
-
 // src/domain/scoring.ts
 export function computeScores(answers: Array<0 | 1>): AxisScores {
 export function toPersonaId(scores: AxisScores): PersonaId {
 
 // src/lib/contract.ts
-export type Quest
+export type Question = { id: number; text: string; options: string[] };
+export type 
 
 ## Memory Index (자동 학습 — 힌트로만 사용, 실제 코드 확인 필수)
 
