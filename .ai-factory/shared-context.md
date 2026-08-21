@@ -83,9 +83,153 @@ export type useAppPrefFn = () => { pref: AppPreference; update: (partial: Partia
 
 ## Shared Types Contract (IMPORT these, do NOT redefine)
 ```typescript
-// Domain types — add your app-specific types here
-export {};
+/**
+ * MoneyPersona 도메인 타입 정의 (SPEC § Data Models)
+ *
+ * 원칙:
+ * - 이 파일은 **순수 타입 정의만**. 런타임 값 선언 0개
+ * - HEX 색상 리터럴 0개 (var(--tds-color-*) CSS 변수만)
+ * - 모든 저장 모델은 version: 1 리터럴 필드 (마이그레이션 정책)
+ *
+ * SPEC 소스:
+ * - SPEC § Data Models → Persona, Question, QuizDraft, QuizResult, CompatRecord, AppPref
+ * - SPEC § Screen Definitions § 라우트 · 네비게이션 state 타입 계약 → RouteState, ResultNavState, CompatNavState
+ */
 
+/**
+ * 3-축 지표 (Persona 카테고리 기본축)
+ */
+export type AxisSpend = 'T' | 'F'; // T=티끌모아(절약), F=플렉스(소비)
+export type AxisPlan = 'P' | 'I'; // P=플랜(계획), I=임프로(즉흥)
+export type AxisRisk = 'S' | 'R'; // S=세이프(안정), R=리스크(도전)
+
+/**
+ * Persona ID: 3-축 조합 → 정확히 8종
+ * (T|F) × (P|I) × (S|R) = 2³ = 8
+ */
+export type PersonaId = `${AxisSpend}${AxisPlan}${AxisRisk}`;
+
+/**
+ * 캐릭터 정의 (정적 상수 테이블, 코드에 내장)
+ *
+ * SPEC: Persona — 캐릭터 정적 상수
+ */
+export interface Persona {
+  /** 캐릭터 ID: TPS | TPR | TIS | TIR | FPS | FPR | FIS | FIR */
+  id: PersonaId;
+
+  /** 캐릭터명: "알뜰형 다람쥐", "전략가 여우" 등 */
+  name: string;
+
+  /** 이모지: "🐿️", "🦊" 등 */
+  emoji: string;
+
+  /** 캐릭터 설명: 60~120자 */
+  summary: string;
+
+  /** 강점 3가지 (고정 길이) */
+  strengths: [string, string, string];
+
+  /** 약점 (1개) */
+  weakness: string;
+
+  /** 절약 팁 3가지 (고정 길이) */
+  tips: [string, string, string];
+
+  /** 상세 리포트 섹션 */
+  report: {
+    /** 소비축 코멘트: 40~100자 */
+    spendComment: string;
+
+    /** 계획축 코멘트 */
+    planComment: string;
+
+    /** 위험축 코멘트 */
+    riskComment: string;
+
+    /** 액션플랜 4단계 (고정 길이) */
+    actionPlan: [string, string, string, string];
+  };
+
+  /** CSS 변수 토큰: 'var(--tds-color-blue-500)' 형태만 허용 (HEX 금지) */
+  colorToken: string;
+}
+
+/**
+ * 진단 문항 정의 (정적 상수, 12문항)
+ *
+ * SPEC: Question — 문항 정적 상수
+ */
+export interface Question {
+  /** 문항 번호: 1..12 (고정) */
+  id: number;
+
+  /** 축 분류: 1~4=spend, 5~8=plan, 9~12=risk */
+  axis: 'spend' | 'plan' | 'risk';
+
+  /** 문항 텍스트: 20~60자 */
+  text: string;
+
+  /** 선택지 2개 (고정) */
+  options: [
+    { key: 'A'; label: string; value: 0 | 1 },
+    { key: 'B'; label: string; value: 0 | 1 }
+  ];
+}
+
+/**
+ * 진행 중 응답 (localStorage `mp.quiz.draft`)
+ *
+ * SPEC: QuizDraft — 진행 중 응답
+ * key: `mp.quiz.draft` · 크기 ≈ 120 bytes
+ */
+export interface QuizDraft {
+  /** 스키마 버전 (마이그레이션 정책: version !== 1이면 삭제 후 기본값으로 시작) */
+  version: 1;
+
+  /** 12문항 응답: 미응답은 null, 선택은 0|1 */
+  answers: Array<0 | 1 | null>;
+
+  /** 마지막 업데이트 시각 (epoch ms) */
+  updatedAt: number;
+}
+
+/**
+ * 3-축 점수 (0~4 범위 정수)
+ *
+ * SPEC: AxisScores (QuizResult 내 nested)
+ */
+export interface AxisScores {
+  /** 소비축 점수: 0..4 (1점씩 4문항) */
+  spend: number;
+
+  /** 계획축 점수: 0..4 */
+  plan: number;
+
+  /** 위험축 점수: 0..4 */
+  risk: number;
+}
+
+/**
+ * 진단 결과 (localStorage `mp.result.latest` / `mp.result.history`)
+ *
+ * SPEC: QuizResult — 진단 결과
+ * key: `mp.result.latest` → QuizResult | null (약 300 bytes)
+ * key: `mp.result.history` → QuizResult[] (최대 20건, 약 6 KB)
+ */
+export interface QuizResult {
+  /** 스키마 버전 */
+  version: 1;
+
+  /** 결과 ID: "r_" + createdAt + "_" + 4자리 [a-z0-9] */
+  id: string;
+
+  /** 진단된 캐릭터 ID */
+  personaId: PersonaId;
+
+  /** 3-축 점수 */
+  scores: AxisS
+// ...truncated
 ```
 
 ## Existing Codebase (import and use these — do NOT recreate)
@@ -108,6 +252,7 @@ export {};
     TossRewardAd.tsx
   hooks/
   lib/
+    contract.ts
     storage.ts
     types.ts
     utils.ts
@@ -115,6 +260,8 @@ export {};
   pages/
     Home.tsx
     __TdsGallery.tsx
+  routes/
+    navState.ts
   styles/
     globals.css
     reward-ad.css
@@ -122,7 +269,9 @@ export {};
   vite-env.d.ts
 
 ### Exports (src/lib/)
+- contract.ts: export type Question =; export type Persona =; export type QuizDraft =; export type Result =; export type CompatMatch =; export type RouteState =; export type AppPreference =; export type ROUTE_PATHS =
 - storage.ts: export function getItem<T>(key: string): T | null; export function setItem<T>(key: string, value: T): void; export function removeItem(key: string): void
+- types.ts: export type AxisSpend = 'T' | 'F'; export type AxisPlan = 'P' | 'I'; export type AxisRisk = 'S' | 'R'; export type PersonaId = `$; export interface Persona; export interface Question; export interface QuizDraft; export interface AxisScores
 - utils.ts: export function cn(...classes: (string | boolean | undefined | null)[]): string; export function formatNumber(n: number): string; export function formatCurrency(n: number, currency = 'KRW'): string
 
 ### Components (src/components/)
