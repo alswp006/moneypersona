@@ -255,6 +255,8 @@ export interface QuizResult {
   hooks/
   lib/
     contract.ts
+    share.ts
+    shareImage.ts
     storage.ts
     types.ts
     utils.ts
@@ -272,6 +274,8 @@ export interface QuizResult {
 
 ### Exports (src/lib/)
 - contract.ts: export type Question =; export type Persona =; export type QuizDraft =; export type Result =; export type CompatMatch =; export type RouteState =; export type AppPreference =; export type ROUTE_PATHS =
+- share.ts: export interface ShareResultOutcome; export function getShareText(result: QuizResult, persona?: Persona): string; export async function shareResult( result: QuizResult, persona: Persona, imageBlob?: Blob ): Promise<ShareResultOutcome>
+- shareImage.ts: export async function renderResultImage(result: QuizResult, persona: Persona): Promise<Blob>
 - storage.ts: export function getItem<T>(key: string): T | null; export function setItem<T>(key: string, value: T): void; export function removeItem(key: string): void
 - types.ts: export type AxisSpend = 'T' | 'F'; export type AxisPlan = 'P' | 'I'; export type AxisRisk = 'S' | 'R'; export type PersonaId = `$; export interface Persona; export interface Question; export interface QuizDraft; export interface AxisScores
 - utils.ts: export function cn(...classes: (string | boolean | undefined | null)[]): string; export function formatNumber(n: number): string; export function formatCurrency(n: number, currency = 'KRW'): string
@@ -293,79 +297,11 @@ export interface QuizResult {
 - SummaryHero.tsx: SummaryHero
 - TossPurchase.tsx: TossPurchase
 - TossRewardAd.tsx: TossRewardAd
+
+### Module Dependencies (import graph)
+  lib/share.ts → imports: lib/types
+  lib/shareImage.ts → imports: lib/types
 CRITICAL: Before creating any new function, type, or component, check the list above. If something similar exists, import and use it.
 
-## Available exports from existing files
-// src/App.tsx
-export default function App() {
-
-// src/components/AdSlot.tsx
-export function AdSlot({ adGroupId, className, variant, theme }: AdSlotProps) {
-
-// src/components/Amount.tsx
-export function Amount({
-
-// src/components/BottomCTA.tsx
-export function SubmitFooter({
-export function ButtonStack({
-
-// src/components/Card.tsx
-export function Card({
-
-// src/components/CountUp.tsx
-export function CountUp({
-
-// src/components/FloatingTabBar.tsx
-export type TabItem = {
-export function FloatingTabBar({ items }: { items: TabItem[] }) {
-
-// src/components/MiniBar.tsx
-export function MiniBar({
-
-// src/components/PageShell.tsx
-export function PageShell({ children, style }: { children: ReactNode; style?: CSSProperties }) {
-
-// src/components/ReportContent.tsx
-export function ReportContent({ personaName, emoji, matchScore, report }: ReportContentProps) {
-
-// src/components/ReportGate.tsx
-export function ReportGate({ reportUnlocked, onUnlock, children }: ReportGateProps) {
-
-// src/components/ScreenScaffold.tsx
-export function ScreenScaffold({
-
-// src/components/Sparkline.tsx
-export function Sparkline({
-
-// src/components/StateView.tsx
-export function EmptyState({
-export function LoadingState({
-
-// src/components/SummaryHero.tsx
-export function SummaryHero({
-
-// src/components/TossPurchase.tsx
-export interface TossPurchaseResult {
-export function TossPurchase({
-
-// src/components/TossRewardAd.tsx
-export function TossRewardAd({
-
-// src/lib/contract.ts
-export type Question = { id: number; text: string; options: string[] };
-export type Persona = { id: string; name: string; emoji?: string; description: string };
-export type QuizDraft = { answers: Record<number, number>; startedAt: number };
-export type Result = { id: string; personaId: string; scores: Record<string, number>; completedAt: number; version: number };
-export type CompatMatch = { id: string; myPersonaId: string; theirCode: string; score: number; recordedAt: number };
-export type RouteState = { pathname: string; ste
-
-## Memory Index (자동 학습 — 힌트로만 사용, 실제 코드 확인 필수)
-
-Available topics: deploy(1), general(7), testing(2), ui(4)
-
-Key lessons (verify against actual code before applying):
-- [deploy] 빌드 불안정 — 의존성 버전 고정, 빌드 전 typecheck 필수 (60% · 타 앱 1회 — 맹신 금지)
-- [general] 영속 저장소에서 읽은 값은 항상 스키마 기본값으로 정규화해 배열·객체 타입을 보장한 뒤 반환하고, 화면은 빈/손상/부분 데이터에서도 렌더되도록 방어하라. (60% · 타 앱 1회 — 맹신 금지)
-- [testing] 여러 화면이 공유하는 상태 훅·데이터 계층은 반환 시그니처와 실패 사유 코드를 먼저 테스트로 고정하고 통과시킨 뒤에야 의존 화면 작업을 시작하고, 화면은 예외 대신 결과 객체로 분기하게 하라. (60% · 타 앱 1회 — 맹신 금지)
-- [general] 정책·기능 제거형 리팩터링은 화면과 도메인 로직 레이어에서만 수행하고, package.json의 플랫폼 필수 의존성(디자인 시스템·플랫폼 SDK·프레임워크 코어)은 어떤 경우에도 삭제하지 말 것 — 필수 패키지 화이트리스트를 빌드 전 가드로 검증하라. (60% · 타 앱 1회 — 맹신 금지)
-- [general] 공용 기반 모듈(상수·저장소·계산 유틸)이 실제로 머지되기 전에는 이를 import하는 화면·훅 패킷을 머지하지 말고, 모든 머지 게이트에 타입체크와 프로덕션 빌드 통과(미해결 import 0건)를 필수로 걸어라. (60% · 타 앱 1회 — 맹신 금지)
+## Already Implemented (do NOT duplicate or overwrite)
+- 0015: 공유 유틸 — Canvas 결과 이미지 생성기 + 3단 폴백 공유 로직 (files: src/lib/shareImage.ts, src/lib/share.ts, src/lib/share.test.ts)
