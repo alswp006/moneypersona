@@ -41,15 +41,13 @@ export function ReportGate({ reportUnlocked, onUnlock, children }: ReportGatePro
 
   function loadAd() {
     setStatus("loading");
-    console.log("DEBUG loadAd() invoked, loadFullScreenAd=", loadFullScreenAd);
     try {
       loadFullScreenAd({
         slotId,
-        onEvent: () => { console.log("DEBUG onEvent(loaded) fired"); setStatus("ready"); },
-        onError: () => { console.log("DEBUG onError fired"); setStatus("error"); },
+        onEvent: () => setStatus("ready"),
+        onError: () => setStatus("error"),
       } as Parameters<typeof loadFullScreenAd>[0]);
-    } catch (e) {
-      console.log("DEBUG loadAd threw", e);
+    } catch {
       setStatus("error");
     }
   }
@@ -62,13 +60,13 @@ export function ReportGate({ reportUnlocked, onUnlock, children }: ReportGatePro
         slotId,
         onEvent: (event: { type?: string }) => {
           if (event?.type === "rewarded" || event?.type === "completed") {
-            setUnlocked(true);
+            flushSync(() => setUnlocked(true));
             onUnlock();
           } else {
-            setStatus("error");
+            flushSync(() => setStatus("error"));
           }
         },
-        onError: () => setStatus("error"),
+        onError: () => flushSync(() => setStatus("error")),
       } as Parameters<typeof showFullScreenAd>[0]);
     } catch {
       setStatus("error");
