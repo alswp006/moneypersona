@@ -92,6 +92,9 @@ function runStageWithRetry(
       }
 
       lastRawResult = raw;
+      console.warn(
+        `[pipeline] Stage "${stage.name}" returned a non-array value on attempt ${attempt}/${totalAttempts} (type: ${typeof raw})`
+      );
     } catch (err) {
       const message = err instanceof Error ? err.message : String(err);
       const errorForLog = err instanceof Error ? err : new Error(message);
@@ -121,16 +124,13 @@ function runStageWithRetry(
     };
   }
 
-  const rawKeys =
-    lastRawResult && typeof lastRawResult === "object"
-      ? Object.keys(lastRawResult as object)
-      : undefined;
-
+  // rawKeys는 항상 배열로 남긴다 — undefined/null 반환이어도 `[]`가 되어
+  // 소비하는 쪽이 `.length`/`.map`을 가드 없이 호출해도 안전하다.
   return {
     error: {
       stage: stage.name,
       reason: `Stage "${stage.name}" returned a non-array value (type: ${typeof lastRawResult})`,
-      rawKeys: rawKeys && rawKeys.length > 0 ? rawKeys : undefined,
+      rawKeys: Object.keys((lastRawResult ?? {}) as object),
     },
   };
 }
@@ -150,7 +150,7 @@ export function runPipeline(
   const errors: PipelineError[] = [];
   let currentInput: unknown = initialInput;
 
-  for (const stage of toArray(stages) as PipelineStage[]) {
+  for (const stage of toArray<PipelineStage>(stages)) {
     const result = runStageWithRetry(stage, currentInput, maxRetries);
 
     if (result.error) {
@@ -234,10 +234,11 @@ export async function runBatchJob(
       }
     }
 
-    if (result.errors.length > 0) {
+    const reportedErrors = toArray<PipelineError>(result.errors);
+    if (reportedErrors.length > 0) {
       console.warn(
-        `Batch job completed with ${result.errors.length} error(s):`,
-        result.errors
+        `Batch job completed with ${reportedErrors.length} error(s):`,
+        reportedErrors
       );
     }
     return result;

@@ -17,7 +17,11 @@ export interface QualityGateResult {
 const CRASH_LOG_TAIL_LINES = 40;
 
 function combineOutput(result: TypeCheckResult): string {
-  return [result.stdout, result.stderr].filter((chunk) => chunk.length > 0).join("\n");
+  // stdout/stderr가 타입상 string이어도 spawn 실패 등으로 비어 올 수 있다 —
+  // 문자열인 것만 남겨 `.length` 접근이 TypeError가 되지 않게 한다.
+  return [result?.stdout, result?.stderr]
+    .filter((chunk): chunk is string => typeof chunk === "string" && chunk.length > 0)
+    .join("\n");
 }
 
 function buildCrashReport(result: TypeCheckResult, combinedOutput: string): string {

@@ -66,8 +66,17 @@ CRITICAL: Before creating any new function, type, or component, check the list a
 
 ## Already Implemented (do NOT duplicate or overwrite)
 - heal-1-01: 파이프라인 배열 접근 방어 및 크래시 제거 (files: src/pipeline/runPipeline.ts, src/pipeline/stages/generateWorkPackets.ts, src/pipeline/utils/toArray.ts, src/pipeline/validation/stageSchema.ts)
+- heal-1-02: 워크패킷 재생성 — SPEC 전 화면 커버리지 복구 (files: src/pipeline/stages/generateWorkPackets.ts, src/constants/questions.ts, src/constants/characters.ts, src/routes/index.tsx)
 
 ## Available exports from existing files
+// src/constants/characters.ts
+export interface Character {
+export const CHARACTERS: Character[] = [
+
+// src/constants/questions.ts
+export interface Question {
+export const QUESTIONS: Question[] = [
+
 // src/domain/scoring.ts
 export type Responses = Record<string, unknown>;
 export interface ValidationResult {
@@ -99,12 +108,7 @@ export function isPacketBlocking(gate: QualityGateResult): boolean {
 
 // src/pipeline/quality/typecheck.ts
 export interface TypeCheckResult {
-export interface RunTypecheckOptions {
-export function runTypecheck(options: RunTypecheckOptions = {}): TypeCheckResult {
-
-// src/pipeline/runPipeline.ts
-export interface PipelineOptions {
-export interfa
+exp
 
 ## Memory Index (자동 학습 — 힌트로만 사용, 실제 코드 확인 필수)
 

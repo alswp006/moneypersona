@@ -89,7 +89,9 @@ function fallbackContent(route: RouteDefinition): ScreenPacketContent {
  * ROUTES를 그대로 순회하므로 라우트 커버리지가 항상 보장된다.
  */
 function generateSpecScreenPackets(): WorkPacket[] {
-  return ROUTES.map((route, index) => {
+  // ROUTES는 모듈 경계를 넘어온 값이다 — 순환 import 등으로 undefined가 되어도
+  // 여기서 TypeError로 죽지 않도록 toArray를 거친다.
+  return toArray<RouteDefinition>(ROUTES).map((route, index) => {
     const content = SCREEN_CONTENT[route.name] ?? fallbackContent(route);
     return {
       id: `packet-route-${route.name}`,
