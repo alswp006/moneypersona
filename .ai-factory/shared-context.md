@@ -42,8 +42,12 @@ export type PipelineResult = { packets: WorkPacket[]; errors: Array<{ packetId: 
 ## Existing Codebase (import and use these — do NOT recreate)
 ### File Tree (src/)
   constants/
+    __tests__/
     characters.ts
     questions.ts
+  domain/
+    __tests__/
+    scoring.ts
   lib/
     contract.ts
   pipeline/
