@@ -41,6 +41,9 @@ export type PipelineResult = { packets: WorkPacket[]; errors: Array<{ packetId: 
 
 ## Existing Codebase (import and use these — do NOT recreate)
 ### File Tree (src/)
+  constants/
+    characters.ts
+    questions.ts
   lib/
     contract.ts
   pipeline/
@@ -48,6 +51,8 @@ export type PipelineResult = { packets: WorkPacket[]; errors: Array<{ packetId: 
     stages/
     utils/
     validation/
+  routes/
+    index.tsx
 
 ### Exports (src/lib/)
 - contract.ts: export type WorkPacket =; export type PipelineStage =; export type validateStageSchemaFn = (stage: PipelineStage, input: unknown) =>; export type toArrayFn = (input: unknown) => unknown[]; export type QUESTIONS =; export type CHARACTERS =; export type calculateScoreFn = (responses: Record<string, unknown>, character:; export type PipelineResult =
