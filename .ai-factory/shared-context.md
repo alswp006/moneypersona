@@ -38,3 +38,17 @@ export type calculateScoreFn = (responses: Record<string, unknown>, character: {
 export type PipelineResult = { packets: WorkPacket[]; errors: Array<{ packetId: string; message: string }> };
 
 ```
+
+## Existing Codebase (import and use these — do NOT recreate)
+### File Tree (src/)
+  lib/
+    contract.ts
+  pipeline/
+    runPipeline.ts
+    stages/
+    utils/
+    validation/
+
+### Exports (src/lib/)
+- contract.ts: export type WorkPacket =; export type PipelineStage =; export type validateStageSchemaFn = (stage: PipelineStage, input: unknown) =>; export type toArrayFn = (input: unknown) => unknown[]; export type QUESTIONS =; export type CHARACTERS =; export type calculateScoreFn = (responses: Record<string, unknown>, character:; export type PipelineResult =
+CRITICAL: Before creating any new function, type, or component, check the list above. If something similar exists, import and use it.
