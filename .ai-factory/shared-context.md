@@ -51,6 +51,8 @@ export type PipelineResult = { packets: WorkPacket[]; errors: Array<{ packetId: 
   lib/
     contract.ts
   pipeline/
+    __tests__/
+    quality/
     runPipeline.ts
     stages/
     utils/

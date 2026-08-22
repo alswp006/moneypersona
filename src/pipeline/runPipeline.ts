@@ -1,10 +1,18 @@
 import type { PipelineStage } from "../lib/contract";
 import { toArray } from "./utils/toArray";
 import { validateStageSchema } from "./validation/stageSchema";
+import { runQualityGate, type QualityGateResult } from "./quality/qualityGate";
+import type { RunTypecheckOptions } from "./quality/typecheck";
 
 export interface PipelineOptions {
   /** 스테이지 결과가 배열이 아닐 때 재시도할 최대 횟수 (기본 2회) */
   maxRetries?: number;
+  /**
+   * 지정하면 파이프라인 실행 후 타입체크 품질 게이트를 실행한다.
+   * tool_crash(게이트 자체 결함)는 packets/errors에 영향을 주지 않고
+   * warnings[]에만 기록된다 — 게이트 결함만으로 최종 패킷 수가 0이 되지 않는다.
+   */
+  qualityGate?: RunTypecheckOptions;
 }
 
 export interface PipelineError {
@@ -13,9 +21,38 @@ export interface PipelineError {
   rawKeys?: string[];
 }
 
+export interface PipelineWarning {
+  stage: string;
+  reason: string;
+  rawOutput?: string;
+}
+
 export interface PipelineResult {
   packets: unknown[];
   errors: PipelineError[];
+  warnings: PipelineWarning[];
+}
+
+/**
+ * 품질 게이트 결과를 파이프라인 요약에 반영한다.
+ * tool_crash만 경고로 남기고 packets/errors는 절대 건드리지 않는다 —
+ * 게이트 자체의 결함이 정상 생성된 패킷을 지워버리는 것을 구조적으로 막는다.
+ */
+export function attachQualityGateWarning(
+  result: PipelineResult,
+  gate: QualityGateResult
+): PipelineResult {
+  if (gate.status !== "tool_crash") {
+    return result;
+  }
+
+  return {
+    ...result,
+    warnings: [
+      ...result.warnings,
+      { stage: "qualityGate:typecheck", reason: "typecheck tool crashed", rawOutput: gate.rawOutput },
+    ],
+  };
 }
 
 const DEFAULT_MAX_RETRIES = 2;
@@ -129,6 +166,7 @@ export function runPipeline(
   return {
     packets: toArray(currentInput),
     errors,
+    warnings: [],
   };
 }
 
@@ -143,7 +181,16 @@ export async function runBatchJob(
   options: PipelineOptions = {}
 ): Promise<PipelineResult> {
   try {
-    const result = runPipeline(stages, initialInput, options);
+    let result = runPipeline(stages, initialInput, options);
+
+    if (options.qualityGate) {
+      const gate = runQualityGate(options.qualityGate);
+      result = attachQualityGateWarning(result, gate);
+      if (gate.status === "tool_crash") {
+        console.warn(`[qualityGate] typecheck tool crashed (non-blocking):`, gate.rawOutput);
+      }
+    }
+
     if (result.errors.length > 0) {
       console.warn(
         `Batch job completed with ${result.errors.length} error(s):`,
@@ -158,6 +205,7 @@ export async function runBatchJob(
     return {
       packets: [],
       errors: [{ stage: "runBatchJob", reason: `Batch job failed: ${message}` }],
+      warnings: [],
     };
   }
 }
