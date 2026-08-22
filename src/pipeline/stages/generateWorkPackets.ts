@@ -1,6 +1,6 @@
 import type { WorkPacket } from "../../lib/contract";
 import { toArray } from "../utils/toArray";
-import { ROUTES } from "../../routes/index";
+import { ROUTES, type RouteDefinition } from "../../routes/index";
 
 export interface GenerateWorkPacketsInput {
   stageIndex?: number;
@@ -70,12 +70,27 @@ const SCREEN_CONTENT: Record<string, ScreenPacketContent> = {
 };
 
 /**
+ * SCREEN_CONTENT에 아직 항목이 없는 라우트를 위한 대체 콘텐츠.
+ * 라우트가 추가됐는데 콘텐츠를 빠뜨려도 크래시 대신 비어있지 않은 패킷을 만든다 —
+ * 여기서 던지면 runBatchJob이 예외를 흡수해 packets: []가 되고,
+ * 이 패킷이 없애려던 "패킷 0개" 상태로 되돌아간다.
+ */
+function fallbackContent(route: RouteDefinition): ScreenPacketContent {
+  return {
+    title: `${route.name} 화면`,
+    description: `${route.path} 라우트 화면 — 상세 명세 미작성(SCREEN_CONTENT에 항목 추가 필요)`,
+    files: [`src/pages/${route.name}.tsx`],
+    acceptanceCriteria: [`${route.path} 라우트가 렌더되고 홈으로 돌아갈 경로가 있다`],
+  };
+}
+
+/**
  * SPEC의 5개 화면(퀴즈/결과/리포트/궁합/홈)을 각 1개 이상의 워크패킷으로 생성한다.
  * ROUTES를 그대로 순회하므로 라우트 커버리지가 항상 보장된다.
  */
 function generateSpecScreenPackets(): WorkPacket[] {
   return ROUTES.map((route, index) => {
-    const content = SCREEN_CONTENT[route.name];
+    const content = SCREEN_CONTENT[route.name] ?? fallbackContent(route);
     return {
       id: `packet-route-${route.name}`,
       stageIndex: index,
