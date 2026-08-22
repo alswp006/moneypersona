@@ -20,7 +20,7 @@ describe("파이프라인 배열 접근 방어 및 크래시 제거 (AC 1-4)", (
       const stages = [
         { name: "stage1", transform: () => [1, 2, 3] },
         { name: "stage2", transform: () => undefined }, // 문제: undefined 반환
-        { name: "stage3", transform: (input) => input }, // stage2 결과 사용
+        { name: "stage3", transform: (input: unknown) => input }, // stage2 결과 사용
       ];
 
       // When: runPipeline 실행
@@ -74,7 +74,7 @@ describe("파이프라인 배열 접근 방어 및 크래시 제거 (AC 1-4)", (
       const stages = [
         { name: "stage1", transform: () => [1, 2, 3] },
         { name: "stage2", transform: () => [] }, // 빈 배열
-        { name: "stage3", transform: (input) => input }, // 빈 배열 처리
+        { name: "stage3", transform: (input: unknown) => input }, // 빈 배열 처리
       ];
 
       const result = runPipeline(stages, {});
@@ -321,11 +321,6 @@ describe("파이프라인 배열 접근 방어 및 크래시 제거 (AC 1-4)", (
     it("AC-4.4: 야간배치 배치 함수(runBatchJob) 실행 중 에러 발생해도 exit code 0으로 종료", async () => {
       // Mock exit process
       let exitCodeCalled: number | null = null;
-      const mockProcess = {
-        exit: (code: number) => {
-          exitCodeCalled = code;
-        },
-      };
 
       const stages = [
         {

@@ -170,6 +170,49 @@ export function runPipeline(
   };
 }
 
+export type PipelineExitReason = "EMPTY_PACKETS" | "STAGE_ERRORS";
+
+export interface PipelineExitDecision {
+  exitCode: number;
+  reason?: PipelineExitReason;
+}
+
+/**
+ * 파이프라인 결과를 CLI 종료코드로 변환한다.
+ * 패킷이 하나도 없으면(EMPTY_PACKETS) 스테이지 에러가 없어도 실패로 취급한다 —
+ * "완주는 했지만 산출물이 없다"는 성공이 아니기 때문이다.
+ */
+export function decidePipelineExit(result: PipelineResult): PipelineExitDecision {
+  if (toArray(result.packets).length === 0) {
+    return { exitCode: 1, reason: "EMPTY_PACKETS" };
+  }
+  if (toArray(result.errors).length > 0) {
+    return { exitCode: 1, reason: "STAGE_ERRORS" };
+  }
+  return { exitCode: 0 };
+}
+
+/**
+ * 야간배치 CLI 진입점. runBatchJob으로 파이프라인을 실행한 뒤 종료코드를
+ * 판정해 반환한다. process.exit은 호출부(실제 CLI 스크립트)의 책임으로 남겨
+ * 이 함수를 테스트/재사용 가능한 순수 흐름으로 유지한다 — 프로세스 크래시 없이
+ * "정상적인 실패 종료"만 신호한다.
+ */
+export async function runPipelineCli(
+  stages: PipelineStage[],
+  initialInput: unknown,
+  options: PipelineOptions = {}
+): Promise<{ result: PipelineResult; exitCode: number; reason?: PipelineExitReason }> {
+  const result = await runBatchJob(stages, initialInput, options);
+  const decision = decidePipelineExit(result);
+
+  if (decision.reason) {
+    console.error(`[pipeline] failed with reason: ${decision.reason}`);
+  }
+
+  return { result, exitCode: decision.exitCode, reason: decision.reason };
+}
+
 /**
  * 야간배치 진입점. runPipeline 자체가 스테이지 단위로 이미 방어되어 있지만,
  * stages 구성 오류 등 예기치 못한 예외까지 최종적으로 흡수해 프로세스가

@@ -1,4 +1,4 @@
-import { describe, it, expect, vi } from "vitest";
+import { describe, it, expect } from "vitest";
 
 /**
  * 품질 게이트 오판정 제거 — 종료코드/에러개수 분리 판정 + 원시 로그 보존

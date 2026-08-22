@@ -26,8 +26,8 @@ describe("AC-1: 상수 배열 구조 검증", () => {
     });
 
     it("AC-1.3: 각 문항은 정확히 4개의 선택지를 가져야 한다", () => {
-      QUESTIONS.forEach((q, idx) => {
-        expect(q.options.length).toBe(4, `Question ${q.id} (index ${idx}) has ${q.options.length} options, expected 4`);
+      QUESTIONS.forEach((q) => {
+        expect(q.options.length).toBe(4);
       });
     });
 
@@ -42,9 +42,9 @@ describe("AC-1: 상수 배열 구조 검증", () => {
       );
 
       expect(Object.keys(byType).sort()).toEqual(["plan-impulse", "risk-safety", "spend-save"]);
-      expect(byType["spend-save"].length).toBe(4, "spend-save axis should have 4 questions");
-      expect(byType["plan-impulse"].length).toBe(4, "plan-impulse axis should have 4 questions");
-      expect(byType["risk-safety"].length).toBe(4, "risk-safety axis should have 4 questions");
+      expect(byType["spend-save"].length).toBe(4);
+      expect(byType["plan-impulse"].length).toBe(4);
+      expect(byType["risk-safety"].length).toBe(4);
     });
 
     it("AC-1.5: 각 문항은 id와 text를 가져야 한다", () => {
@@ -65,10 +65,10 @@ describe("AC-1: 상수 배열 구조 검증", () => {
 
     it("AC-1.7: 각 캐릭터의 ID는 고유하고 3글자 코드여야 한다", () => {
       const ids = CHARACTERS.map((c) => c.id);
-      expect(new Set(ids).size).toBe(8, "Character IDs must be unique");
+      expect(new Set(ids).size).toBe(8);
       ids.forEach((id) => {
-        expect(id.length).toBe(3, `Character ID "${id}" must be 3 characters`);
-        expect(/^[SVPR][SPIF][RF]$/.test(id)).toBe(true, `Character ID "${id}" must match pattern [SV][PI][RF]`);
+        expect(id.length).toBe(3);
+        expect(/^[SVPR][SPIF][RF]$/.test(id)).toBe(true);
       });
     });
 
@@ -86,15 +86,15 @@ describe("AC-1: 상수 배열 구조 검증", () => {
 
     it("AC-1.9: 각 캐릭터의 traits는 정확히 3개여야 한다", () => {
       CHARACTERS.forEach((c) => {
-        expect(c.traits.length).toBe(3, `Character ${c.id} has ${c.traits.length} traits, expected 3`);
+        expect(c.traits.length).toBe(3);
       });
     });
 
     it("AC-1.10: 각 캐릭터는 tips를 가져야 하고 정확히 3개여야 한다", () => {
       CHARACTERS.forEach((c) => {
         expect((c as any).tips).toBeDefined();
-        expect(Array.isArray((c as any).tips)).toBe(true, `Character ${c.id} tips must be an array`);
-        expect((c as any).tips.length).toBe(3, `Character ${c.id} has ${(c as any).tips.length} tips, expected 3`);
+        expect(Array.isArray((c as any).tips)).toBe(true);
+        expect((c as any).tips.length).toBe(3);
       });
     });
 
@@ -182,7 +182,7 @@ describe("AC-3: 결정론성 검증 (Determinism)", () => {
     }
 
     // All results should be identical
-    expect(new Set(results).size).toBe(1, "Scoring engine must be deterministic");
+    expect(new Set(results).size).toBe(1);
     // Each result should match a valid character ID
     const validIds = CHARACTERS.map((c) => c.id);
     results.forEach((result) => {
@@ -203,7 +203,7 @@ describe("AC-3: 결정론성 검증 (Determinism)", () => {
       results.push(characterId);
     }
 
-    expect(new Set(results).size).toBe(1, "Partial responses should also be deterministic");
+    expect(new Set(results).size).toBe(1);
   });
 
   it("AC-3.3: 축 점수는 [0, 12] 범위를 벗어나지 않아야 한다", () => {
@@ -293,8 +293,8 @@ describe("상수 배열 내용 스모크 테스트", () => {
   it("모든 문항 텍스트는 공백이 아니어야 한다", () => {
     QUESTIONS.forEach((q) => {
       expect(q.text.trim().length).toBeGreaterThan(0);
-      q.options.forEach((opt, idx) => {
-        expect(opt.trim().length).toBeGreaterThan(0, `Question ${q.id} option ${idx} is empty`);
+      q.options.forEach((opt) => {
+        expect(opt.trim().length).toBeGreaterThan(0);
       });
     });
   });

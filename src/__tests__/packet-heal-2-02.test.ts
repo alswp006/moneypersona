@@ -1,6 +1,6 @@
-import { describe, it, expect, vi, beforeEach, afterEach } from "vitest";
+import { describe, it, expect, beforeEach } from "vitest";
 import type { PipelineStage } from "../lib/contract";
-import { runPipeline, type PipelineError, type PipelineResult } from "../pipeline/runPipeline";
+import { runPipeline, type PipelineResult } from "../pipeline/runPipeline";
 import { toArray } from "../pipeline/utils/toArray";
 import { validateStageSchema } from "../pipeline/validation/stageSchema";
 import { generateWorkPackets, isPipelineSuccessful } from "../pipeline/stages/generateWorkPackets";
@@ -164,7 +164,7 @@ describe("AC-2: `.length` 직접 접근 정규화 검증", () => {
       undefinedResult.map((x) => x);
       nullResult.filter((x) => x);
       objectResult.forEach((x) => x);
-      arrayResult.map((x) => x * 2);
+      arrayResult.map((x) => (x as number) * 2);
     }).not.toThrow();
   });
 });
