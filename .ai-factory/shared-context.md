@@ -204,6 +204,7 @@ export type RouteState = {
     useDisclaimerGate.ts
   lib/
     __tests__/
+    contract.ts
     storage.ts
     types.ts
     utils.ts
@@ -224,6 +225,7 @@ export type RouteState = {
   vite-env.d.ts
 
 ### Exports (src/lib/)
+- contract.ts: export type Question =; export type Persona =; export type Answer =; export type Result =; export type CompatResult =; export type calculateScoreFn = (answers: Answer[], questionIds: string[]) => Record<string, number>; export type generateShareCodeFn = (result: Result) => string; export type parseShareCodeFn = (code: string) => Result | null
 - storage.ts: export function getItem<T>(key: string): T | null; export function setItem<T>(key: string, value: T): void; export function removeItem(key: string): void
 - types.ts: export type AxisId = "A1" | "A2" | "A3"; export type AxisLetter = "F" | "S" | "P" | "I" | "C" | "R"; export type PersonaCode = | "FPC" | "FPR" | "FIC" | "FIR" | "SPC" | "SPR" | "SIC" | "SIR"; export interface Choice; export interface Question; export interface Persona; export interface AxisScore; export interface QuizResult
 - utils.ts: export function cn(...classes: (string | boolean | undefined | null)[]): string; export function formatNumber(n: number): string; export function formatCurrency(n: number, currency = 'KRW'): string
