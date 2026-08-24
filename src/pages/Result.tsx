@@ -80,8 +80,8 @@ export default function Result() {
       top={<Top title={<Top.TitleParagraph>내 머니 페르소나</Top.TitleParagraph>} />}
       bottom={
         <SubmitFooter
-          label="결과 공유하기"
-          onClick={() => navigate('/share', { state: { resultId: result.id } as RouteState['/share'] })}
+          label="상세 리포트 보기"
+          onClick={() => navigate('/report', { state: { resultId: result.id } as RouteState['/report'] })}
         />
       }
     >
@@ -127,9 +127,9 @@ export default function Result() {
       <Button
         variant="weak"
         display="block"
-        onClick={() => navigate('/report', { state: { resultId: result.id } as RouteState['/report'] })}
+        onClick={() => navigate('/share', { state: { resultId: result.id } as RouteState['/share'] })}
       >
-        상세 리포트 보기
+        결과 공유하기
       </Button>
       <Spacing size={12} />
       <Button

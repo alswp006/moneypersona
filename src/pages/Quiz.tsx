@@ -8,11 +8,13 @@ import { QUESTIONS } from '@/data/questions';
 import { scoreQuiz } from '@/lib/scoring';
 import { makeShareCode } from '@/lib/shareCode';
 import { getItem, setItem, removeItem } from '@/lib/storage';
+import { markLastResult } from '@/hooks/useDisclaimerGate';
 import type { Choice, QuizProgress, QuizResult, RouteState } from '@/lib/types';
 
 const PROGRESS_KEY = 'mp:progress:v1';
 const RESULT_KEY = 'mp:result:v1';
 const HISTORY_KEY = 'mp:history:v1';
+const HISTORY_LIMIT = 20;
 
 type Envelope<T> = { v: 1; data: T };
 
@@ -57,7 +59,10 @@ function writeProgress(progress: QuizProgress): void {
 function appendHistory(result: QuizResult): void {
   const stored = getItem<Envelope<QuizResult[]> | QuizResult[]>(HISTORY_KEY);
   const list: QuizResult[] = stored ? ('data' in stored ? stored.data : stored) : [];
-  const envelope: Envelope<QuizResult[]> = { v: 1, data: [...list, result] };
+  const trimmed = [...list, result]
+    .sort((a, b) => a.createdAt - b.createdAt)
+    .slice(-HISTORY_LIMIT);
+  const envelope: Envelope<QuizResult[]> = { v: 1, data: trimmed };
   setItem(HISTORY_KEY, envelope);
 }
 
@@ -89,6 +94,7 @@ export default function Quiz() {
 
     setItem(RESULT_KEY, { v: 1, data: result } satisfies Envelope<QuizResult>);
     appendHistory(result);
+    markLastResult(result.id);
     removeItem(PROGRESS_KEY);
 
     (navigate as unknown as NavigateWithReplace)(

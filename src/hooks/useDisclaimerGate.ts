@@ -30,6 +30,11 @@ export function markDisclaimerSeen(): void {
   setItem<AppFlags>(FLAGS_KEY, { ...readFlags(), disclaimerSeen: true });
 }
 
+/** 새 결과를 마지막 결과로 기록한다 — 다른 플래그는 그대로 둔다. */
+export function markLastResult(resultId: string): void {
+  setItem<AppFlags>(FLAGS_KEY, { ...readFlags(), lastResultId: resultId });
+}
+
 export interface DisclaimerGate {
   /** 최초 방문(고지 미확인)일 때만 true — AlertDialog의 open에 그대로 연결한다. */
   open: boolean;
