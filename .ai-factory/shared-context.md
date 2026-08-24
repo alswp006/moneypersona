@@ -155,12 +155,25 @@ export interface AppFlags {
 }
 
 export type ScoreResult =
-  | { success: true; score: number }
-  | { success: false; error: string };
+  | {
+      ok: true;
+      personaCode: PersonaCode;
+      axisScores: [AxisScore, AxisScore, AxisScore];
+    }
+  | {
+      ok: false;
+      reason: string;
+    };
 
 export type StorageResult<T> =
-  | { success: true; data: T }
-  | { success: false; error: string };
+  | {
+      ok: true;
+      data: T;
+    }
+  | {
+      ok: false;
+      reason: "quota" | "parse" | "not_found";
+    };
 
 export type RouteState = {
   "/": undefined;
@@ -226,8 +239,8 @@ export type RouteState = {
 
 ### Exports (src/lib/)
 - contract.ts: export type Question =; export type questionsFn = () => Question[]; export type Persona =; export type personasFn = () => Persona[]; export type AxisScores =; export type QuizResult =; export type calculateScoresFn = (answers: string[]) => AxisScores; export type generateShareCodeFn = (result: QuizResult) => string
-- scoring.ts: export type ScoreQuizResult = |; export function scoreQuiz(answers: (0 | 1)[]): ScoreQuizResult; export function getPersona(code: PersonaCode): Persona | null; export const calculateScore: calculateScoreFn = (answers: Answer[], questionIds: string[]) =>
-- shareCode.ts: export function makeShareCode(code: PersonaCode): string; export type ParseShareCodeResult = |; export function parseShareCode(input: string): ParseShareCodeResult; export const generateShareCode: generateShareCodeFn = (result: Result) =>
+- scoring.ts: export type ScoreQuizResult = |; export function scoreQuiz(answers: (0 | 1)[]): ScoreQuizResult; export function getPersona(code: PersonaCode): Persona | null
+- shareCode.ts: export function makeShareCode(code: PersonaCode): string; export type ParseShareCodeResult = |; export function parseShareCode(input: string): ParseShareCodeResult; export function generateShareCode(result: QuizResult): string
 - storage.ts: export function getItem<T>(key: string): T | null; export function setItem<T>(key: string, value: T): void; export function removeItem(key: string): void
 - types.ts: export type AxisId = "A1" | "A2" | "A3"; export type AxisLetter = "F" | "S" | "P" | "I" | "C" | "R"; export type PersonaCode = | "FPC" | "FPR" | "FIC" | "FIR" | "SPC" | "SPR" | "SIC" | "SIR"; export interface Choice; export interface Question; export interface Persona; export interface AxisScore; export interface QuizResult
 - utils.ts: export function cn(...classes: (string | boolean | undefined | null)[]): string; export function formatNumber(n: number): string; export function formatCurrency(n: number, currency = 'KRW'): string
@@ -250,8 +263,8 @@ export type RouteState = {
 - TossRewardAd.tsx: TossRewardAd
 
 ### Module Dependencies (import graph)
-  lib/scoring.ts → imports: lib/types, lib/contract, data/personas
-  lib/shareCode.ts → imports: lib/types, lib/contract
+  lib/scoring.ts → imports: lib/types, data/personas
+  lib/shareCode.ts → imports: lib/types
   pages/Quiz.tsx → imports: components/ScreenScaffold, components/MiniBar, data/questions, lib/scoring, lib/shareCode, lib/storage, hooks/useDisclaimerGate, lib/types
   pages/Result.tsx → imports: components/ScreenScaffold, components/Card, components/BottomCTA, components/StateView, components/MiniBar, components/AdSlot, components/DisclaimerNotice, lib/storage, hooks/useDisclaimerGate, data/personas, lib/types
 CRITICAL: Before creating any new function, type, or component, check the list above. If something similar exists, import and use it.
