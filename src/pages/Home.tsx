@@ -3,33 +3,24 @@ import { useNavigate } from 'react-router-dom';
 import { ScreenScaffold } from '../components/ScreenScaffold';
 import { SummaryHero } from '../components/SummaryHero';
 import { Card } from '../components/Card';
+import DisclaimerNotice from '../components/DisclaimerNotice';
 
 /**
- * Golden Home page — 대시보드/탭-루트 골든 레퍼런스.
+ * 홈 — 앱 진입점(탭 루트).
  *
- * 다른 페이지를 쓸 때 이 패턴을 모방하라:
- * - ScreenScaffold로 감싼다(raw fragment 골격 금지) — safe-area + 100dvh 자동 처리.
- * - 화면 최상단에 SummaryHero로 시각 앵커를 만든다('휑함'의 가장 큰 원인은 앵커 부재).
- *   데이터가 있으면 value에 <Amount value={n} unit="원" typography="t1" />로 핵심 숫자를 크게 박아라.
- * - 1차 진입 액션은 SummaryHero 카드 내부 버튼(display="block", 전체폭)에 둔다.
- *   → 화면 중앙 부유/좌측 글자폭 버튼 금지. 하단 TabBar가 있으면 SubmitFooter와 겹치므로 카드 안에.
- * - 핵심 정보는 raw <div>가 아니라 Card로 묶어 위계를 만든다.
- * - 하단 탭이 필요하면(2~5탭): bottom={<FloatingTabBar items={[{label,path}...]} />}.
- *   ('TDS TabBar'는 존재하지 않는다 — 직접 만들지 말고 FloatingTabBar를 써라.)
- * - 카피는 CLAUDE.md "카피 규칙 — AI 냄새 금지"를 따른다: 기능 나열식 홍보 문구·상투구·
- *   generic 버튼("시작하기") 금지. 이 파일의 예시 문구도 앱 맥락에 맞게 교체 대상이다.
+ * 진단 결과/기록 데이터에 아직 의존하지 않는 최소 배선이다. 진단 데이터가 붙는 패킷은
+ * SummaryHero의 value를 <Amount typography="t1" />(최근 결과의 절약 지수 등)로 교체하고,
+ * 아래 안내 Card를 '최근 진단 기록' 행으로 바꾸면 된다 — 골격(ScreenScaffold + 카드 내 CTA)은 유지.
  *
- * Scaffold tokens (replaced by scaffold-toss.ts at project creation):
- *   MoneyPersona -> the app's display name
- *   12개 질문으로 나의 소비 성향을 '알뜰형 다람쥐' 같은 8가지 캐릭터로 진단해주는 재테크 성향 테스트    -> the one-line description
+ * 탭 루트라 하단 고정 CTA(SubmitFooter)를 쓰지 않는다 — FloatingTabBar와 자리가 겹친다.
+ * 1차 진입 액션은 SummaryHero 카드 안의 전체폭 버튼(display="block")이다.
  */
 
-// ⚠ 이 목록은 골격 예시다 — 앱의 실제 콘텐츠(핵심 지표·최근 기록·바로가기)로 반드시 교체하라.
-// '간편한 사용/빠른 처리' 같은 기능 나열식 홍보 문구는 카피 규칙(CLAUDE.md "AI 냄새 금지") 위반이다.
-// 사용자가 이 화면에서 실제로 확인할 정보를 넣어라 — 아래처럼 데이터가 사는 행으로.
-const HIGHLIGHTS = [
-  { title: '오늘', description: '아직 기록이 없어요' },
-  { title: '이번 주', description: '기록 3건 · 평균 12분' },
+// 테스트가 무엇을 재는지 — 사용자가 시작 전에 실제로 궁금해하는 것만.
+const TEST_FACTS = [
+  { title: '문항 12개', description: '세 가지 축으로 소비 성향을 나눠요' },
+  { title: '캐릭터 8종', description: '알뜰형 다람쥐부터 질러형 치타까지' },
+  { title: '기록 보관', description: '결과는 이 기기에만 남아요' },
 ];
 
 export default function Home() {
@@ -39,17 +30,15 @@ export default function Home() {
     <ScreenScaffold
       top={<Top title={<Top.TitleParagraph>MoneyPersona</Top.TitleParagraph>} />}
     >
-      {/* 시각 앵커: 헤드라인 + 카드 내 진입 버튼(부유 금지, display="block" 전체폭).
-          데이터 앱이면 value를 <Amount typography="t1" />(핵심 숫자)로 교체하라. */}
       <SummaryHero
-        label="MoneyPersona"
-        value={<Paragraph.Text typography="t2">12개 질문으로 나의 소비 성향을 '알뜰형 다람쥐' 같은 8가지 캐릭터로 진단해주는 재테크 성향 테스트</Paragraph.Text>}
-        caption="로그인 없이 바로 쓸 수 있어요"
+        label="돈 쓰는 성향 테스트"
+        value={
+          <Paragraph.Text typography="t2">12문항으로 찾는 내 소비 캐릭터</Paragraph.Text>
+        }
+        caption="약 2분 · 로그인 없이 바로"
         action={
-          // 라벨은 앱의 핵심 행동 동사로 교체하라 — "연봉 계산하기"/"기록 남기기" 등.
-          // generic "시작하기"/"확인"은 카피 규칙 위반. onClick도 실제 첫 화면 경로로.
-          <Button variant="fill" display="block" onClick={() => navigate('/')}>
-            첫 결과 보기
+          <Button variant="fill" display="block" onClick={() => navigate('/quiz')}>
+            테스트 시작하기
           </Button>
         }
         testId="home-hero"
@@ -57,17 +46,18 @@ export default function Home() {
 
       <Spacing size={24} />
 
-      {/* 핵심 정보는 Card로 묶기(raw div 금지) — 위계 생성 */}
-      <Card testId="home-highlights">
-        {HIGHLIGHTS.map((h, idx) => (
+      <Card testId="home-facts">
+        {TEST_FACTS.map((fact) => (
           <ListRow
-            key={idx}
-            contents={<ListRow.Texts type="2RowTypeA" top={h.title} bottom={h.description} />}
+            key={fact.title}
+            contents={
+              <ListRow.Texts type="2RowTypeA" top={fact.title} bottom={fact.description} />
+            }
           />
         ))}
       </Card>
 
-      <Spacing size={24} />
+      <DisclaimerNotice />
     </ScreenScaffold>
   );
 }

@@ -26,6 +26,17 @@ export function mockTds() {
     Button: ({ children, onClick, ...props }: any) =>
       React.createElement("button", { onClick, ...props }, children),
 
+    // 하단 고정 단일 CTA — 실제 TDS와 동일하게 그 자체가 <button>이다.
+    // (src/components/BottomCTA의 SubmitFooter가 이걸 감싸므로 목이 없으면 페이지가 렌더 중 throw)
+    FixedBottomCTA: Object.assign(
+      ({ children, onClick, disabled, ...props }: any) =>
+        React.createElement("button", { onClick, disabled, ...props }, children),
+      {
+        Double: ({ leftButton, rightButton }: any) =>
+          React.createElement("div", { "data-slot": "fixed-bottom-cta" }, leftButton, rightButton),
+      },
+    ),
+
     ListRow: Object.assign(
       ({ children, onClick, ...props }: any) =>
         React.createElement("div", { onClick, role: "listitem", ...props }, children),
