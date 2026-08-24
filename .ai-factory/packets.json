@@ -1,0 +1,747 @@
+[
+  {
+    "id": "0001",
+    "title": "도메인 타입 + RouteState 계약 정의",
+    "epic": "Epic 1. 타입 + 정적 콘텐츠",
+    "task": {
+      "description": "SPEC Data Models의 모든 엔티티를 순수 타입 파일로 선언한다. AxisId/AxisLetter/PersonaCode 유니온, Choice/Question/Persona/AxisScore/QuizResult/QuizProgress/CompatibilityRecord/AppFlags 인터페이스, ScoreResult·StorageResult 결과 유니온, 그리고 페이지 간 location.state 계약인 RouteState를 정의한다. 런타임 코드(함수·상수·import) 0줄.",
+      "acceptance_criteria": [
+        "src/lib/types.ts에서 Choice, Question, Persona, AxisScore, QuizResult, QuizProgress, CompatibilityRecord, AppFlags, RouteState, ScoreResult, StorageResult가 모두 export되고 npx tsc --noEmit이 에러 0으로 통과한다",
+        "Persona.tips와 plan30d는 [string,string,string], strengths와 cautions는 [string,string] 튜플 타입이며, string[]로 선언하면 안 된다",
+        "QuizResult.axisScores는 [AxisScore,AxisScore,AxisScore], answers는 (0|1)[], CompatibilityRecord.grade는 '최고의 짝'|'좋은 궁합'|'무난한 궁합'|'서로 배우는 궁합' 4개 리터럴 유니온이다",
+        "RouteState는 '/', '/quiz', '/result', '/report', '/share', '/compat', '/history' 7개 키를 가지며 /result·/report·/share는 { resultId: string } | undefined, /compat는 { prefillCode?: string } | undefined 이다",
+        "파일 내 import 문 0건, 런타임 값 export 0건(grep 'export const'와 'export function' 결과 0)"
+      ]
+    },
+    "covers": [
+      "F1-AC-1 foundation",
+      "RouteState 계약"
+    ],
+    "files": [
+      "src/lib/types.ts"
+    ],
+    "definition_of_done": [
+      "tsc --noEmit 통과",
+      "types.ts 외 파일 미수정",
+      "런타임 코드 0줄"
+    ],
+    "depends_on": [],
+    "db_schema": "interface QuizResult { id: string; createdAt: number; answers: (0|1)[]; axisScores: [AxisScore,AxisScore,AxisScore]; personaCode: PersonaCode; shareCode: string; reportUnlocked: boolean } → localStorage keys: 'mp:result:v1', 'mp:history:v1', 'mp:progress:v1', 'mp:compat:v1', 'mp:flags:v1' (모두 {v:1,data} 래퍼)",
+    "api_contract": "",
+    "dependencies": [],
+    "ui_requirements": ""
+  },
+  {
+    "id": "0002",
+    "title": "12문항 정적 콘텐츠 + 무결성 테스트",
+    "epic": "Epic 1. 타입 + 정적 콘텐츠",
+    "task": {
+      "description": "SPEC의 12문항 표(Q1~Q12, 축 A1/A2/A3 각 4문항)를 QUESTIONS 상수로 그대로 옮긴다. 문구는 한 글자도 변경하지 않으며 각 문항은 선택지 2개({id:'a',score:1},{id:'b',score:0})를 가진다. getQuestion(index) 조회 헬퍼와 개수·축분포 검증 테스트를 함께 작성한다.",
+      "acceptance_criteria": [
+        "export const QUESTIONS: readonly Question[]가 정확히 12개이고 id가 1..12 오름차순이며, text/choice label이 SPEC 표 문자열과 완전히 일치한다",
+        "축별 문항 수가 A1=4(id 1~4), A2=4(id 5~8), A3=4(id 9~12)이고 모든 문항의 choices.length === 2, choices[0].score===1, choices[1].score===0 이다",
+        "getQuestion(index: number): Question | null 이 0~11에는 해당 문항을, -1이나 12에는 null을 반환하고 예외를 던지지 않는다",
+        "npx vitest run src/data/__tests__/questions.test.ts 가 개수 12·축 4/4/4·choices 2개 검증으로 전부 통과한다"
+      ]
+    },
+    "covers": [
+      "F1-AC-1"
+    ],
+    "files": [
+      "src/data/questions.ts",
+      "src/data/__tests__/questions.test.ts"
+    ],
+    "definition_of_done": [
+      "tsc --noEmit 통과",
+      "questions 테스트 green",
+      "console.* 0건"
+    ],
+    "depends_on": [
+      "0001"
+    ],
+    "db_schema": "interface Question { id: number; axis: AxisId; text: string; choices: [Choice, Choice] } → 번들 상수, localStorage 저장 안 함",
+    "api_contract": "",
+    "dependencies": [],
+    "ui_requirements": ""
+  },
+  {
+    "id": "0003",
+    "title": "8캐릭터 페르소나 콘텐츠 + 무결성 테스트",
+    "epic": "Epic 1. 타입 + 정적 콘텐츠",
+    "task": {
+      "description": "FPC~SIR 8개 PersonaCode의 name/emoji/tagline/summary/tips3/strengths2/cautions2/plan30d3/bestMatch를 PERSONAS 상수로 작성한다. name·emoji·bestMatch는 SPEC 표 고정값(FPC=알뜰형 다람쥐/🐿️/SPR … SIR=플렉스 공작/🦚/FPC)이며 FPC tips 3문장은 SPEC 픽스처와 문자열이 완전히 같아야 한다. 검증 테스트 포함.",
+      "acceptance_criteria": [
+        "export const PERSONAS: Record<PersonaCode, Persona> 의 키 집합이 {FPC,FPR,FIC,FIR,SPC,SPR,SIC,SIR}와 정확히 일치하고 Object.keys(PERSONAS).length === 8 이다",
+        "모든 persona에서 tips.length===3, strengths.length===2, cautions.length===2, plan30d.length===3 이고 tips 각 문장은 15~60자다",
+        "name/emoji/bestMatch 8행이 SPEC 표와 1:1 일치하며 FPC.tips[0] === '월급날 자동이체로 저축분을 먼저 떼어두세요' 이다",
+        "모든 텍스트에 HEX 색상 코드, http/https 외부 URL, '설치'·'다운로드'·'스토어' 단어가 0건이다",
+        "npx vitest run src/data/__tests__/personas.test.ts 전부 통과"
+      ]
+    },
+    "covers": [
+      "F1-AC-1"
+    ],
+    "files": [
+      "src/data/personas.ts",
+      "src/data/__tests__/personas.test.ts"
+    ],
+    "definition_of_done": [
+      "tsc --noEmit 통과",
+      "personas 테스트 green",
+      "외부 링크·설치 유도 문구 0건"
+    ],
+    "depends_on": [
+      "0001"
+    ],
+    "db_schema": "interface Persona { code: PersonaCode; name: string; emoji: string; tagline: string; summary: string; tips:[string,string,string]; strengths:[string,string]; cautions:[string,string]; plan30d:[string,string,string]; bestMatch: PersonaCode } → 번들 상수",
+    "api_contract": "",
+    "dependencies": [],
+    "ui_requirements": ""
+  },
+  {
+    "id": "0004",
+    "title": "안전 저장소 코어 safeStorage",
+    "epic": "Epic 2. 데이터 레이어",
+    "task": {
+      "description": "localStorage 저수준 래퍼를 구현한다. {v:1,data} 직렬화, 손상 JSON·버전 불일치 시 키 삭제 후 null, QuotaExceededError 캐치 후 onQuota 콜백 실행 및 1회 재시도, localStorage 접근 자체가 throw하는 환경에서는 인메모리 Map 폴백으로 동작한다. 도메인 지식 없음, 예외 전파 0건.",
+      "acceptance_criteria": [
+        "readWrapped<T>(key, validate)가 JSON 파싱 실패·v!==1·validate 실패 시 removeItem 호출 후 null을 반환하고 예외를 던지지 않는다",
+        "writeWrapped<T>(key, data)가 성공 시 {ok:true}, QuotaExceededError 시 onQuota 콜백 실행 후 1회 재시도하고 재실패 시 {ok:false,reason:'quota'}를 반환한다",
+        "모듈 import 시점에 localStorage에 접근하지 않으며(지연 probe), probe가 throw하는 환경에서 write→read 왕복이 인메모리 Map으로 성공하고 isPersistent()===false 다",
+        "vitest 테스트 4케이스가 통과한다: (a) '{ not json' → null+키삭제, (b) {v:2} → null+키삭제, (c) setItem 항상 throw → {ok:false,reason:'quota'}, (d) localStorage getter throw 환경 왕복 성공",
+        "파일 전체에 console.* 호출이 0건이다"
+      ]
+    },
+    "covers": [
+      "F1-AC-5",
+      "F1-AC-6",
+      "F1-AC-8",
+      "F8-AC-8"
+    ],
+    "files": [
+      "src/lib/storage/safeStorage.ts",
+      "src/lib/storage/__tests__/safeStorage.test.ts"
+    ],
+    "definition_of_done": [
+      "tsc --noEmit 통과",
+      "safeStorage 테스트 4케이스 green",
+      "console.* 0건"
+    ],
+    "depends_on": [
+      "0001"
+    ],
+    "db_schema": "저장 포맷: localStorage[key] = JSON.stringify({ v: 1, data: T }) — v !== 1 이면 키 삭제 후 초기값",
+    "api_contract": "",
+    "dependencies": [],
+    "ui_requirements": ""
+  },
+  {
+    "id": "0005",
+    "title": "스코어링 엔진 + 공유 코드 생성·파싱",
+    "epic": "Epic 2. 데이터 레이어",
+    "task": {
+      "description": "순수 함수 레이어. 12답변 배열을 3축 점수로 집계해 PersonaCode를 판정하는 scoreQuiz, 페르소나 조회 getPersona, shareCode 생성 makeShareCode와 파싱 parseShareCode를 구현한다. 랜덤·시간 의존 로직 0건이며 동일 입력은 항상 동일 출력이다. 각각 단위 테스트를 붙인다.",
+      "acceptance_criteria": [
+        "scoreQuiz([1,1,1,1,1,1,1,1,1,1,1,1])이 {ok:true, personaCode:'FPC', axisScores:[{axis:'A1',score:4,letter:'F',percent:100},{axis:'A2',...},{axis:'A3',...}]}를 반환하고, 동일 입력 100회 호출 결과가 deep-equal 이다",
+        "scoreQuiz가 길이≠12 또는 0/1 외 값 포함 시 {ok:false,reason:'invalid_answers'}를 반환한다([1,1,1] 케이스 테스트)",
+        "축 판정이 score>=2 → 첫 글자(F/P/C), score<2 → 둘째 글자(S/I/R)이고 percent=score*25 이며, [1,1,0,0,1,0,0,0,0,0,0,0] → 'FIR' + axisScores[0].percent===50 이다",
+        "makeShareCode('FPC')==='MP1-FPC-2' 이고 parseShareCode가 'mp1-spr-6'→{ok:true}, 'MP1FPC2'(하이픈 없음)→{ok:true,code:'FPC'}, 'ABCD'→{ok:false,reason:'format'}, 'MP1-FPC-9'→{ok:false,reason:'checksum'}를 반환한다",
+        "getPersona('XXX')가 throw 없이 null을 반환하고, 두 파일 모두 console.* 0건이다"
+      ]
+    },
+    "covers": [
+      "F1-AC-2",
+      "F1-AC-3",
+      "F1-AC-7",
+      "F6-AC-4",
+      "F6-AC-5"
+    ],
+    "files": [
+      "src/lib/scoring.ts",
+      "src/lib/shareCode.ts",
+      "src/lib/__tests__/scoring.test.ts",
+      "src/lib/__tests__/shareCode.test.ts"
+    ],
+    "definition_of_done": [
+      "tsc --noEmit 통과",
+      "scoring/shareCode 테스트 green",
+      "Math.random·Date 사용 0건"
+    ],
+    "depends_on": [
+      "0001",
+      "0002",
+      "0003"
+    ],
+    "db_schema": "interface AxisScore { axis: AxisId; score: 0|1|2|3|4; letter: AxisLetter; percent: 0|25|50|75|100 } → 저장 없음(순수 계산)",
+    "api_contract": "",
+    "dependencies": [],
+    "ui_requirements": ""
+  },
+  {
+    "id": "0006",
+    "title": "결과·히스토리·진행·플래그 리포지토리",
+    "epic": "Epic 2. 데이터 레이어",
+    "task": {
+      "description": "safeStorage 위에 mp:result:v1, mp:history:v1, mp:progress:v1, mp:flags:v1 CRUD를 구현한다. saveResult는 결과 덮어쓰기 + 히스토리 push + 최신 20건 FIFO 유지 + flags.lastResultId 갱신을 수행하고, quota 발생 시 히스토리를 최신 5건으로 축소해 1회 재시도한다. 손상 항목은 필터링 후 즉시 재저장한다.",
+      "acceptance_criteria": [
+        "히스토리 20건 상태에서 saveResult(r) 호출 시 길이가 20으로 유지되고 createdAt이 가장 오래된 항목이 제거되며 loadFlags().lastResultId === r.id 가 된다",
+        "setItem이 항상 throw하는 환경에서 saveResult가 예외 없이 {ok:false,reason:'quota'}를 반환하고 앱이 크래시하지 않는다",
+        "키가 하나도 없는 상태에서 loadResult()===null, loadHistory().length===0, loadProgress()===null 이고 이 세 호출 동안 setItem 호출 횟수가 0이다",
+        "손상 1건 + 정상 2건이 저장된 히스토리에서 loadHistory()가 2건을 반환하고, 이후 localStorage의 mp:history:v1에도 2건만 남는다(정제본 재저장)",
+        "saveProgress/clearProgress/updateResultUnlocked(id)가 제공되고 updateResultUnlocked 호출 후 result와 history의 동일 id 항목 모두 reportUnlocked===true 이며 파일 전체 console.* 0건이다"
+      ]
+    },
+    "covers": [
+      "F1-AC-4",
+      "F1-AC-6",
+      "F1-AC-8",
+      "F7-AC-7"
+    ],
+    "files": [
+      "src/lib/storage/resultRepo.ts",
+      "src/lib/storage/progressRepo.ts",
+      "src/lib/storage/flagsRepo.ts",
+      "src/lib/storage/__tests__/resultRepo.test.ts"
+    ],
+    "definition_of_done": [
+      "tsc --noEmit 통과",
+      "resultRepo 테스트 green",
+      "throw 대신 {ok:false,reason} 반환"
+    ],
+    "depends_on": [
+      "0004"
+    ],
+    "db_schema": "'mp:result:v1' {v:1,data:QuizResult} 1건 / 'mp:history:v1' {v:1,data:QuizResult[]} 최신 20건 / 'mp:progress:v1' {v:1,data:QuizProgress} / 'mp:flags:v1' {v:1,data:AppFlags} 기본값 {onboardingSeen:false,lastResultId:null,disclaimerSeen:false}",
+    "api_contract": "",
+    "dependencies": [],
+    "ui_requirements": ""
+  },
+  {
+    "id": "0007",
+    "title": "궁합 계산 + 궁합 기록 리포지토리",
+    "epic": "Epic 2. 데이터 레이어",
+    "task": {
+      "description": "두 PersonaCode의 축 글자를 비교해 점수·등급·일치축을 계산하는 순수 함수 computeCompatibility와 mp:compat:v1 CRUD(최신 20건 FIFO)를 구현한다. 점수 공식은 100 - (A1 불일치 25) - (A2 불일치 15) - (A3 불일치 10) 이며 결과는 항상 50~100 정수다.",
+      "acceptance_criteria": [
+        "computeCompatibility('FPC','FPC')가 {score:100, grade:'최고의 짝', matchedAxes:['A1','A2','A3']}를, computeCompatibility('FPC','SIR')이 {score:50, grade:'서로 배우는 궁합', matchedAxes:[]}를 반환한다",
+        "등급 경계가 score>=90 최고의 짝, 75~89 좋은 궁합, 60~74 무난한 궁합, <60 서로 배우는 궁합으로 매핑되고 8x8=64쌍 전부 score가 50~100 정수다",
+        "saveCompat(record)가 mp:compat:v1에 최신순으로 저장하고 21건째 저장 시 가장 오래된 1건을 제거해 20건을 유지한다",
+        "loadCompat()이 키 없음·손상 JSON·v!==1 상황에서 예외 없이 빈 배열을 반환하고 파일 전체 console.* 0건이다",
+        "npx vitest run src/lib/__tests__/compatibility.test.ts 전부 통과"
+      ]
+    },
+    "covers": [
+      "F6-AC-1",
+      "F6-AC-2",
+      "F6-AC-3"
+    ],
+    "files": [
+      "src/lib/compatibility.ts",
+      "src/lib/storage/compatRepo.ts",
+      "src/lib/__tests__/compatibility.test.ts"
+    ],
+    "definition_of_done": [
+      "tsc --noEmit 통과",
+      "궁합 테스트 green",
+      "랜덤·시간 의존 0건(createdAt 인자 주입)"
+    ],
+    "depends_on": [
+      "0004"
+    ],
+    "db_schema": "interface CompatibilityRecord { id: `c_${number}`; createdAt: number; myCode: PersonaCode; friendCode: PersonaCode; friendShareCode: string; score: number; grade: '최고의 짝'|'좋은 궁합'|'무난한 궁합'|'서로 배우는 궁합'; matchedAxes: AxisId[] } → localStorage key: 'mp:compat:v1' 최신 20건",
+    "api_contract": "",
+    "dependencies": [],
+    "ui_requirements": ""
+  },
+  {
+    "id": "0008",
+    "title": "앱 상태 훅 (결과·히스토리·플래그)",
+    "epic": "Epic 2. 데이터 레이어",
+    "task": {
+      "description": "페이지가 리포지토리를 직접 호출하지 않도록 React 훅 레이어를 만든다. useResult(resultId?)는 결과 조회와 리포트 해제 갱신을, useHistory()는 목록·삭제·전체 초기화를, useFlags()는 온보딩/고지 확인 플래그를 제공한다. 모든 훅은 마운트 후 1회만 저장소를 읽고 상태로 캐싱한다.",
+      "acceptance_criteria": [
+        "useResult(resultId?)가 { result, persona, loading, unlockReport() }를 반환하고, resultId가 없으면 flags.lastResultId의 결과를, 결과가 전혀 없으면 result===null을 반환한다",
+        "unlockReport() 호출 후 result.reportUnlocked===true 로 상태가 갱신되고 페이지 새로고침 후에도 localStorage에서 true로 복원된다",
+        "useHistory()가 { items, remove(id), clearAll() }를 반환하고 remove 후 items 길이가 1 감소하며 localStorage의 mp:history:v1도 동일 길이가 된다",
+        "useFlags()가 { flags, markOnboardingSeen(), markDisclaimerSeen() }를 반환하고 초기 상태는 {onboardingSeen:false,lastResultId:null,disclaimerSeen:false}다",
+        "훅 파일 3개 모두 useEffect 내부에서만 저장소에 접근하며 렌더 중 localStorage 호출 0건, console.* 0건"
+      ]
+    },
+    "covers": [
+      "F3-AC-1",
+      "F7-AC-1",
+      "F7-AC-7"
+    ],
+    "files": [
+      "src/hooks/useResult.ts",
+      "src/hooks/useHistory.ts",
+      "src/hooks/useFlags.ts"
+    ],
+    "definition_of_done": [
+      "tsc --noEmit 통과",
+      "훅에서 예외 전파 0건",
+      "페이지는 이 훅만 사용"
+    ],
+    "depends_on": [
+      "0006"
+    ],
+    "db_schema": "읽기: mp:result:v1, mp:history:v1, mp:flags:v1 (resultRepo/flagsRepo 경유, 훅에서 직접 localStorage 접근 금지)",
+    "api_contract": "",
+    "dependencies": [],
+    "ui_requirements": ""
+  },
+  {
+    "id": "0009",
+    "title": "퀴즈 진행 훅 useQuizFlow",
+    "epic": "Epic 2. 데이터 레이어",
+    "task": {
+      "description": "12문항 진행 상태를 관리하는 훅. 현재 인덱스, 답변 배열, 진행률, 선택/이전/제출 액션을 제공하고 매 선택마다 mp:progress:v1에 저장해 이탈 후 복구를 지원한다. 12문항이 모두 채워지면 scoreQuiz로 채점해 QuizResult를 만들고 저장한 뒤 resultId를 반환한다.",
+      "acceptance_criteria": [
+        "useQuizFlow()가 { index, answers, progressPercent, select(score), goPrev(), submit(), canSubmit } 을 반환하고 progressPercent = Math.round((index+1)/12*100) 이다",
+        "select 호출 시 answers[index]가 갱신되고 index가 1 증가하며 mp:progress:v1에 {answers,currentIndex,updatedAt}이 저장된다(12번째 선택 시 index는 11에서 더 증가하지 않음)",
+        "저장된 진행 상태가 있는 채로 훅을 새로 마운트하면 index와 answers가 저장 값 그대로 복구되고, 손상된 진행 데이터면 index=0·answers 전부 null로 시작한다",
+        "submit()이 답변 12개가 모두 채워졌을 때만 QuizResult(id=`r_${createdAt}_${personaCode}`, shareCode 포함)를 저장하고 resultId 문자열을 반환하며, 미완료 시 null을 반환하고 저장하지 않는다",
+        "submit 성공 후 mp:progress:v1 키가 삭제되고 console.* 0건"
+      ]
+    },
+    "covers": [
+      "F2-AC-1",
+      "F2-AC-2",
+      "F2-AC-3",
+      "F2-AC-5"
+    ],
+    "files": [
+      "src/hooks/useQuizFlow.ts",
+      "src/hooks/__tests__/useQuizFlow.test.ts"
+    ],
+    "definition_of_done": [
+      "tsc --noEmit 통과",
+      "useQuizFlow 테스트 green",
+      "goPrev는 index 0에서 no-op"
+    ],
+    "depends_on": [
+      "0005",
+      "0006"
+    ],
+    "db_schema": "interface QuizProgress { answers: (0|1|null)[]; currentIndex: number; updatedAt: number } → localStorage key: 'mp:progress:v1'",
+    "api_contract": "",
+    "dependencies": [],
+    "ui_requirements": ""
+  },
+  {
+    "id": "0010",
+    "title": "공용 시각화 컴포넌트 (MiniBar / SummaryHero / EmptyState)",
+    "epic": "Epic 3. 공용 UI + 페이지",
+    "task": {
+      "description": "여러 페이지가 재사용할 표현 전용 컴포넌트를 만든다. MiniBar(축 percent 가로 막대), SummaryHero(이모지+캐릭터명+태그라인 헤더 카드), EmptyState(아이콘+안내문+CTA 버튼). 상태 없음, 저장소 접근 없음, 모든 색상은 TDS 토큰 또는 var(--tds-color-*)만 사용한다.",
+      "acceptance_criteria": [
+        "MiniBar가 percent 0~100 prop을 받아 채움 폭을 width 퍼센트로 렌더하고 라벨(예: '절약 100%')을 Paragraph.Text로 표시하며, percent가 범위를 벗어나면 0~100으로 클램프한다",
+        "SummaryHero가 emoji, name, tagline prop을 받아 이모지(t1급 크기), 이름(t2 강조), 태그라인(Paragraph.Text)을 세로로 렌더하고 간격은 TDS Spacing(size 지정)만 사용한다",
+        "EmptyState가 Asset.ContentIcon + 안내 문구 + TDS Button(display=\"block\", 높이 44px 이상) CTA를 렌더하고 onAction prop 호출로 동작한다",
+        "세 컴포넌트 파일 어디에도 HEX 색상 문자열(#으로 시작하는 6자리)이 0건이고 Tailwind padding/margin 클래스(p-, m-, gap-)가 0건이다",
+        "tsc --noEmit 통과 및 각 컴포넌트가 360px 뷰포트에서 가로 스크롤을 만들지 않는다(고정 px width 미사용)"
+      ]
+    },
+    "covers": [
+      "F3-AC-3",
+      "F7-AC-3",
+      "F8-AC-2"
+    ],
+    "files": [
+      "src/components/MiniBar.tsx",
+      "src/components/SummaryHero.tsx",
+      "src/components/EmptyState.tsx"
+    ],
+    "definition_of_done": [
+      "tsc --noEmit 통과",
+      "HEX 색상 0건",
+      "TDS Spacing만으로 간격 조절"
+    ],
+    "depends_on": [
+      "0001"
+    ],
+    "db_schema": "",
+    "api_contract": "",
+    "dependencies": [],
+    "ui_requirements": "TDS 컴포넌트: Paragraph.Text, Button, Asset.ContentIcon, Spacing. MiniBar = flex 레이아웃(라벨 좌 / 막대 우)의 커스텀 CSS만 허용, 막대 색은 var(--tds-color-*). SummaryHero = 중앙 정렬 세로 스택(이모지 → 이름 → 태그라인), 각 요소 사이 Spacing size={8~12}. EmptyState = ContentIcon(중앙) → Spacing → 안내 문구 2줄 → Spacing → display=\"block\" Button. 상태: MiniBar는 percent=0일 때도 트랙(빈 막대) 표시. 모든 텍스트 해요체."
+  },
+  {
+    "id": "0011",
+    "title": "홈 화면 `/`",
+    "epic": "Epic 3. 공용 UI + 페이지",
+    "task": {
+      "description": "앱 진입 화면. 서비스 한 줄 소개, '진단 시작하기' 1차 CTA, 최근 결과 요약 카드(있을 때), 기록/궁합 진입 ListRow를 배치한다. 결과가 없으면 EmptyState 대신 소개 카드 + CTA만 노출하고, 진행 중 퀴즈가 있으면 '이어서 하기' 버튼을 함께 보여준다. 데이터는 useResult/useFlags 훅으로만 읽는다.",
+      "acceptance_criteria": [
+        "결과가 없는 상태에서 진입하면 소개 카드와 '진단 시작하기' Button(display=\"block\")만 보이고 최근 결과 카드는 렌더되지 않는다",
+        "최근 결과가 있으면 SummaryHero로 캐릭터 이모지·이름·태그라인이 표시되고 '결과 다시 보기' 탭 시 navigate('/result', { state: { resultId } })로 이동한다",
+        "mp:progress:v1에 미완료 진행이 있으면 '이어서 하기' 버튼이 추가로 보이고 탭 시 /quiz로 이동해 저장된 문항부터 시작한다",
+        "'진단 시작하기' 탭 시 generateHapticFeedback({ type: 'success' })가 호출되고 /quiz로 이동한다",
+        "화면 하단 콘텐츠 사이에 AdSlot 배너가 1개 렌더되며 CTA 버튼을 가리지 않는다(콘텐츠 흐름 내 배치)"
+      ]
+    },
+    "covers": [
+      "F7-AC-1",
+      "F7-AC-2",
+      "F5-AC-6"
+    ],
+    "files": [
+      "src/pages/Home.tsx"
+    ],
+    "definition_of_done": [
+      "tsc --noEmit 통과",
+      "훅 외 저장소 직접 접근 0건",
+      "HEX 색상 0건"
+    ],
+    "depends_on": [
+      "0008"
+    ],
+    "db_schema": "읽기 전용: useResult(), useFlags(), progressRepo.loadProgress()",
+    "api_contract": "",
+    "dependencies": [],
+    "ui_requirements": "ScreenScaffold로 감싼다. 레이아웃(위→아래): Top(title='머니페르소나', subtitle='12문항으로 보는 내 소비 성향') → Spacing size={16} → 최근 결과가 있으면 Card 안에 SummaryHero + '결과 다시 보기' ListRow / 없으면 소개 Card(Paragraph.Text 2줄) → Spacing size={16} → ListRow('기록 보기', withArrow) + ListRow('친구와 궁합 보기', withArrow) → Spacing size={24} → AdSlot 배너 → 하단 고정 SubmitFooter에 Button display=\"block\" '진단 시작하기'(진행 중이면 그 위에 secondary '이어서 하기'). 상태: 결과 없음(소개 카드) / 결과 있음(요약 카드) / 진행 중(이어서 하기 노출). 하단 고정 영역 paddingBottom: 'calc(16px + env(safe-area-inset-bottom))'. 문구는 해요체."
+  },
+  {
+    "id": "0012",
+    "title": "퀴즈 화면 `/quiz`",
+    "epic": "Epic 3. 공용 UI + 페이지",
+    "task": {
+      "description": "useQuizFlow 훅을 UI로 조립한다. 상단 진행률(1/12 ~ 12/12)과 진행 바, 질문 텍스트, 선택지 2개를 큰 터치 카드로 렌더한다. 선택 즉시 다음 문항으로 넘어가고, 12번째 선택 후 submit()으로 채점해 /result로 이동한다. 뒤로 버튼으로 이전 문항 수정이 가능하다.",
+      "acceptance_criteria": [
+        "진입 시 현재 문항 번호가 'N/12' 형식으로 표시되고 MiniBar 진행률이 Math.round((index+1)/12*100)%로 갱신된다",
+        "선택지 버튼은 각각 높이 44px 이상, display=\"block\" 폭이며 탭 시 generateHapticFeedback({ type: 'tickWeak' }) 호출 후 다음 문항으로 전환된다",
+        "이전 버튼을 누르면 직전 문항으로 돌아가고 이전에 고른 선택지가 선택 상태(Chip 또는 강조 스타일)로 표시되며, index 0에서는 이전 버튼이 비활성이다",
+        "12번째 선택 직후 submit()이 호출되어 resultId를 받고 navigate('/result', { state: { resultId } }, { replace: true })로 이동한다",
+        "앱을 종료했다 /quiz로 재진입하면 저장된 currentIndex 문항부터 이어지며, 퀴즈 화면에는 광고 배너가 렌더되지 않는다"
+      ]
+    },
+    "covers": [
+      "F2-AC-1",
+      "F2-AC-2",
+      "F2-AC-3",
+      "F2-AC-4",
+      "F2-AC-5"
+    ],
+    "files": [
+      "src/pages/Quiz.tsx"
+    ],
+    "definition_of_done": [
+      "tsc --noEmit 통과",
+      "navigate state는 RouteState['/result'] 타입 캐스팅",
+      "HEX 색상 0건"
+    ],
+    "depends_on": [
+      "0009"
+    ],
+    "db_schema": "useQuizFlow 경유로 'mp:progress:v1' 읽기/쓰기, 제출 시 'mp:result:v1' + 'mp:history:v1' 저장",
+    "api_contract": "",
+    "dependencies": [],
+    "ui_requirements": "ScreenScaffold + Top(title 없이 진행 표시). 레이아웃: 상단 'N/12' Paragraph.Text + MiniBar(percent) → Spacing size={24} → 질문 텍스트(t2 강조, 2줄 허용) → Spacing size={24} → 선택지 2개를 세로 스택 Button(weak/секondary 스타일, display=\"block\", 각 사이 Spacing size={12}) → 하단에 '이전' 텍스트 버튼(좌측, index 0에서 disabled). 상태: 첫 문항(이전 비활성) / 중간 / 마지막(선택 시 즉시 채점 로딩 표시 — TDS Skeleton 또는 버튼 loading). 선택지 텍스트는 SPEC 문구 그대로. 광고 없음. 터치 타깃 44px 이상."
+  },
+  {
+    "id": "0013",
+    "title": "결과 화면 서브 컴포넌트 (persona/axis/tips 카드)",
+    "epic": "Epic 3. 공용 UI + 페이지",
+    "task": {
+      "description": "결과 화면을 구성하는 표현 전용 카드 3종을 만든다. PersonaCard(이모지·이름·태그라인·요약), AxisScoreCard(3축 MiniBar + F/S, P/I, C/R 라벨), TipsCard(맞춤 절약 팁 3개 ListRow). 모두 props로만 데이터를 받고 저장소·라우터에 접근하지 않는다.",
+      "acceptance_criteria": [
+        "PersonaCard가 Persona prop을 받아 SummaryHero + summary(Paragraph.Text)를 Card 안에 렌더하고, summary는 60~140자 그대로 줄바꿈 없이 표시된다",
+        "AxisScoreCard가 axisScores 3개를 받아 '소비 성향/관리 성향/투자 성향' 라벨과 각 축의 letter 표기(예: 절약 F 100%)를 MiniBar로 3줄 렌더한다",
+        "TipsCard가 tips 3개를 ListRow 3개로 렌더하고 각 행에 번호 또는 Asset.ContentIcon이 붙으며, tips가 3개가 아니면 받은 개수만큼만 렌더하고 크래시하지 않는다",
+        "세 파일 모두 HEX 색상 0건, Tailwind p-/m-/gap- 클래스 0건, ListRow에 padding prop 미사용",
+        "tsc --noEmit 통과"
+      ]
+    },
+    "covers": [
+      "F3-AC-2",
+      "F3-AC-3",
+      "F3-AC-4"
+    ],
+    "files": [
+      "src/components/result/PersonaCard.tsx",
+      "src/components/result/AxisScoreCard.tsx",
+      "src/components/result/TipsCard.tsx"
+    ],
+    "definition_of_done": [
+      "tsc --noEmit 통과",
+      "props-only 순수 컴포넌트",
+      "TDS Spacing으로만 간격 조절"
+    ],
+    "depends_on": [
+      "0003",
+      "0010"
+    ],
+    "db_schema": "",
+    "api_contract": "",
+    "dependencies": [],
+    "ui_requirements": "TDS: Card 대용은 ListRow 그룹 + Spacing 조합 또는 TDS 제공 카드형 컨테이너 사용. PersonaCard = SummaryHero(이모지/이름/태그라인) → Spacing size={12} → summary Paragraph.Text. AxisScoreCard = 섹션 타이틀 '내 성향 분석'(t3) → 3줄 MiniBar(라벨: 소비 성향/관리 성향/투자 성향, 값: 'F 절약 100%'처럼 글자+퍼센트). TipsCard = 섹션 타이틀 '맞춤 절약 팁 3가지' → ListRow 3개(왼쪽 Asset.ContentIcon, 본문 팁 문구). 모든 문구 해요체, 색상은 TDS 토큰."
+  },
+  {
+    "id": "0014",
+    "title": "결과 화면 `/result` 조립",
+    "epic": "Epic 3. 공용 UI + 페이지",
+    "task": {
+      "description": "location.state.resultId(없으면 lastResultId)로 결과를 불러와 PersonaCard·AxisScoreCard·TipsCard를 조립한다. 상세 리포트 보기·공유하기·궁합 비교 CTA를 배치하고, 결과가 없으면 EmptyState로 진단을 유도한다. 하단에는 오해 방지 고지 문구와 배너 광고를 배치한다.",
+      "acceptance_criteria": [
+        "state.resultId가 없고 저장된 결과도 없으면 EmptyState('아직 진단 결과가 없어요' + '진단 시작하기' 버튼)가 보이고 크래시 없이 렌더된다",
+        "결과가 있으면 PersonaCard·AxisScoreCard·TipsCard(팁 3개)가 순서대로 렌더되고 캐릭터 이름이 personaCode에 해당하는 SPEC 표 값과 일치한다",
+        "화면 하단에 '재미로 보는 성향 테스트이며 금융 투자 자문이 아닙니다' 고지 문구가 Paragraph.Text로 항상 표시된다",
+        "'상세 리포트 보기' 탭 시 navigate('/report', { state: { resultId } }), '공유하기' 탭 시 /share, '친구와 궁합 보기' 탭 시 /compat로 각각 resultId state와 함께 이동한다",
+        "팁 카드 아래에 AdSlot 배너가 1개 렌더되고, 브라우저 새로고침 후에도 동일 결과가 localStorage에서 복원된다"
+      ]
+    },
+    "covers": [
+      "F3-AC-1",
+      "F3-AC-5",
+      "F3-AC-6",
+      "F4-AC-1"
+    ],
+    "files": [
+      "src/pages/Result.tsx"
+    ],
+    "definition_of_done": [
+      "tsc --noEmit 통과",
+      "RouteState 타입으로 state 캐스팅",
+      "직접 라우트 진입 시 크래시 0건"
+    ],
+    "depends_on": [
+      "0008",
+      "0013"
+    ],
+    "db_schema": "읽기: useResult(state?.resultId) → 'mp:result:v1' / 'mp:flags:v1'.lastResultId",
+    "api_contract": "",
+    "dependencies": [],
+    "ui_requirements": "ScreenScaffold + Top(title='내 머니 페르소나'). 레이아웃: PersonaCard → Spacing size={16} → AxisScoreCard → Spacing size={16} → TipsCard → Spacing size={16} → AdSlot 배너 → Spacing size={16} → ListRow('상세 리포트 보기', withArrow) + ListRow('친구와 궁합 보기', withArrow) → Spacing size={12} → 고지 Paragraph.Text(작은 크기, 회색 토큰) → 하단 고정 SubmitFooter: Button display=\"block\" '결과 공유하기'. 상태: 로딩(TDS Skeleton 3블록) / 정상 / 결과 없음(EmptyState + '진단 시작하기'). paddingBottom: 'calc(16px + env(safe-area-inset-bottom))'."
+  },
+  {
+    "id": "0015",
+    "title": "상세 리포트 화면 `/report` (리워드 광고 게이트)",
+    "epic": "Epic 3. 공용 UI + 페이지",
+    "task": {
+      "description": "강점 2·주의 신호 2·30일 액션 플랜 3단계를 담은 ReportContent 컴포넌트를 만들고, TossRewardAd로 게이팅한 /report 페이지를 조립한다. 잠금 상태에서는 블러 미리보기 + '광고 보고 리포트 열기' 안내를 보여주고, 광고 시청 완료 후 unlockReport()로 해제 상태를 저장해 재방문 시 광고 없이 열린다.",
+      "acceptance_criteria": [
+        "reportUnlocked===false이면 ReportContent 대신 잠금 미리보기(상단 2줄만 노출 + 나머지 마스킹)와 '광고 보고 리포트 열기' 안내가 표시된다",
+        "TossRewardAd(slotId={import.meta.env.VITE_TOSS_AD_SLOT_ID})가 리포트 콘텐츠를 감싸고, 광고 시청 완료 시 unlockReport()가 호출되어 result.reportUnlocked===true로 저장된다",
+        "해제 후 페이지를 새로고침하거나 /result → /report로 재진입하면 광고 없이 즉시 ReportContent가 보인다",
+        "ReportContent가 강점 2개, 주의 신호 2개, 30일 플랜 3단계를 각각 섹션 제목과 ListRow로 렌더하고 플랜은 1·2·3 순번이 붙는다",
+        "결과가 없는 상태로 /report에 직접 진입하면 EmptyState('먼저 진단을 해주세요' + 진단 시작 버튼)가 보이고 크래시하지 않는다"
+      ]
+    },
+    "covers": [
+      "F4-AC-1",
+      "F4-AC-2",
+      "F4-AC-3",
+      "F4-AC-4"
+    ],
+    "files": [
+      "src/components/result/ReportContent.tsx",
+      "src/pages/Report.tsx"
+    ],
+    "definition_of_done": [
+      "tsc --noEmit 통과",
+      "리워드 슬롯 ID는 env 참조(하드코딩 금지)",
+      "해제 상태 localStorage 영속"
+    ],
+    "depends_on": [
+      "0008"
+    ],
+    "db_schema": "QuizResult.reportUnlocked: boolean → 'mp:result:v1' 및 'mp:history:v1' 동일 id 항목 동시 갱신(updateResultUnlocked)",
+    "api_contract": "",
+    "dependencies": [],
+    "ui_requirements": "ScreenScaffold + Top(title='상세 분석 리포트'). 잠금 상태 레이아웃: 미리보기 카드(첫 2줄만 선명, 이하 마스킹 오버레이 — 커스텀 CSS는 오버레이 배치에만) → Spacing size={16} → 안내 Paragraph.Text('짧은 광고를 보면 전체 리포트를 열 수 있어요') → 하단 고정 Button display=\"block\" '광고 보고 리포트 열기'(TossRewardAd로 감싼 영역 트리거, 탭 시 generateHapticFeedback success). 해제 상태: ReportContent = '나의 강점'(ListRow 2) → Spacing size={16} → '주의할 신호'(ListRow 2) → Spacing size={16} → '30일 액션 플랜'(ListRow 3, 1·2·3 번호) → Spacing size={16} → 고지 문구. 상태: 잠금 / 로딩(Skeleton) / 해제 / 결과 없음(EmptyState)."
+  },
+  {
+    "id": "0016",
+    "title": "결과 이미지 생성 + 공유 화면 `/share`",
+    "epic": "Epic 3. 공용 UI + 페이지",
+    "task": {
+      "description": "Canvas로 1080×1080 결과 카드 PNG를 그리는 유틸(캐릭터 이모지·이름·태그라인·3축 퍼센트·공유 코드 포함)과, 미리보기 + 공유하기 + 코드 복사를 제공하는 /share 페이지를 만든다. 공유는 navigator.share를 사용하고 미지원 환경에서는 이미지 다운로드와 코드 복사로 대체한다.",
+      "acceptance_criteria": [
+        "renderResultImage(result, persona)가 1080×1080 캔버스를 그려 PNG data URL(또는 Blob)을 반환하고 외부 이미지 서버·폰트 CDN 호출이 0건이다",
+        "생성된 이미지에 캐릭터 이모지, 이름, 태그라인, 3축 퍼센트, shareCode(MP1-XXX-N) 텍스트가 모두 포함된다",
+        "'공유하기' 탭 시 navigator.share가 있으면 호출되고, 없으면 이미지 저장 + Toast('이미지를 저장했어요')로 폴백하며 어떤 경우에도 예외가 전파되지 않는다",
+        "'공유 코드 복사' 탭 시 클립보드에 shareCode가 복사되고 TDS Toast로 '공유 코드를 복사했어요'가 노출된다",
+        "결과가 없는 상태로 /share 직접 진입 시 EmptyState가 보이고, 미리보기 생성 중에는 TDS Skeleton이 표시된다"
+      ]
+    },
+    "covers": [
+      "F5-AC-1",
+      "F5-AC-2",
+      "F5-AC-3",
+      "F5-AC-4"
+    ],
+    "files": [
+      "src/lib/shareImage.ts",
+      "src/pages/Share.tsx"
+    ],
+    "definition_of_done": [
+      "tsc --noEmit 통과",
+      "외부 SDK(카카오 등) 사용 0건",
+      "canvas 폰트는 시스템 폰트만"
+    ],
+    "depends_on": [
+      "0008"
+    ],
+    "db_schema": "읽기: useResult(state?.resultId) → QuizResult.shareCode('MP1-<PersonaCode>-<checksum>')",
+    "api_contract": "",
+    "dependencies": [],
+    "ui_requirements": "ScreenScaffold + Top(title='결과 공유하기'). 레이아웃: 정사각 미리보기 영역(width 100%, aspect-ratio 1/1 커스텀 CSS 허용) → Spacing size={16} → ListRow('공유 코드', 우측에 shareCode 텍스트 + '복사' 버튼) → Spacing size={16} → 안내 Paragraph.Text('친구에게 코드를 보내면 궁합을 볼 수 있어요') → 하단 고정 Button display=\"block\" '공유하기'(탭 시 haptic success). 상태: 이미지 생성 중(Skeleton 정사각) / 완료(미리보기) / 공유 실패(Toast '공유를 취소했어요') / 결과 없음(EmptyState). 고정 px width 금지, 색상은 TDS 토큰."
+  },
+  {
+    "id": "0017",
+    "title": "궁합 비교 화면 `/compat`",
+    "epic": "Epic 3. 공용 UI + 페이지",
+    "task": {
+      "description": "친구 공유 코드를 입력받아 parseShareCode로 검증하고 computeCompatibility로 점수·등급·일치축을 계산해 결과 카드를 보여준다. 계산 결과는 compatRepo에 저장하고 최근 궁합 기록 목록을 하단에 표시한다. 잘못된 코드는 TextField 에러 상태로 사유를 안내한다.",
+      "acceptance_criteria": [
+        "TextField에 'MP1-SPR-6'을 입력하고 '궁합 보기'를 누르면 점수(50~100), 등급 Chip, 일치한 축 목록이 카드로 표시된다",
+        "형식 오류('ABCD') 입력 시 TextField error 상태로 '공유 코드 형식이 올바르지 않아요', checksum 오류('MP1-FPC-9') 시 '코드를 다시 확인해주세요'가 표시되고 계산은 실행되지 않는다",
+        "내 결과가 없는 상태로 진입하면 EmptyState('먼저 내 진단을 해주세요' + 진단 시작 버튼)가 보이고 입력 폼은 비활성이다",
+        "궁합 계산 성공 시 CompatibilityRecord가 mp:compat:v1에 저장되고 하단 '최근 궁합' 목록에 즉시 1건 추가되며, 새로고침 후에도 유지된다",
+        "location.state.prefillCode가 있으면 TextField 초깃값으로 채워지고, 소문자·하이픈 없는 입력도 정규화되어 인식된다"
+      ]
+    },
+    "covers": [
+      "F6-AC-1",
+      "F6-AC-2",
+      "F6-AC-3",
+      "F6-AC-4",
+      "F6-AC-5"
+    ],
+    "files": [
+      "src/pages/Compat.tsx",
+      "src/components/compat/CompatScoreCard.tsx",
+      "src/components/compat/CompatHistoryList.tsx"
+    ],
+    "definition_of_done": [
+      "tsc --noEmit 통과",
+      "계산은 compatibility.ts 순수 함수만 사용",
+      "HEX 색상 0건"
+    ],
+    "depends_on": [
+      "0007",
+      "0008"
+    ],
+    "db_schema": "쓰기: 'mp:compat:v1' {v:1,data:CompatibilityRecord[]} 최신 20건 / 읽기: 'mp:result:v1'의 personaCode",
+    "api_contract": "",
+    "dependencies": [],
+    "ui_requirements": "ScreenScaffold + Top(title='친구와 궁합 보기'). 레이아웃: 안내 Paragraph.Text('친구의 공유 코드를 입력해보세요') → Spacing size={16} → TextField(label='공유 코드', placeholder='MP1-FPC-2', 대문자 자동 변환, error 상태 지원) → Spacing size={12} → Button display=\"block\" '궁합 보기'(탭 시 haptic success) → Spacing size={24} → 결과 있을 때 CompatScoreCard(점수 t1 강조 + 등급 Chip + 일치 축 ListRow) → Spacing size={16} → '최근 궁합' 섹션 CompatHistoryList(ListRow: 이모지 두 개 + 등급 + 점수, 최대 20건) → AdSlot 배너. 상태: 내 결과 없음(EmptyState, 입력 비활성) / 입력 대기 / 에러(TextField error 문구) / 결과 표시 / 기록 없음('아직 비교한 친구가 없어요'). 문구 해요체."
+  },
+  {
+    "id": "0018",
+    "title": "기록 화면 `/history`",
+    "epic": "Epic 3. 공용 UI + 페이지",
+    "task": {
+      "description": "과거 진단 결과 최신 20건을 목록으로 보여준다. 각 행은 날짜, 캐릭터 이모지·이름, 대표 축 요약을 표시하고 탭하면 해당 결과 상세로 이동한다. 개별 삭제와 전체 초기화(AlertDialog 확인)를 제공하고 기록이 없으면 EmptyState를 보여준다.",
+      "acceptance_criteria": [
+        "useHistory().items가 createdAt 내림차순으로 정렬되어 ListRow로 렌더되고 각 행에 'YYYY.MM.DD' 날짜와 캐릭터 이모지·이름이 표시된다",
+        "행을 탭하면 navigate('/result', { state: { resultId: item.id } })로 이동해 해당 시점 결과가 보인다",
+        "전체 초기화 버튼 탭 시 AlertDialog가 뜨고 왼쪽 버튼은 '닫기', 오른쪽은 '삭제하기'이며 삭제 확정 후 목록이 0건이 되고 mp:history:v1도 빈 배열이 된다",
+        "기록이 0건이면 EmptyState('아직 진단 기록이 없어요' + '진단 시작하기' 버튼)가 보이고 초기화 버튼은 숨겨진다",
+        "목록 하단에 AdSlot 배너가 1개 렌더되고, 20건일 때 스크롤이 끊김 없이 동작한다(고정 px height 미사용)"
+      ]
+    },
+    "covers": [
+      "F7-AC-4",
+      "F7-AC-5",
+      "F7-AC-6",
+      "F7-AC-7"
+    ],
+    "files": [
+      "src/pages/History.tsx"
+    ],
+    "definition_of_done": [
+      "tsc --noEmit 통과",
+      "삭제 확인 다이얼로그 왼쪽 버튼 '닫기'",
+      "훅 외 저장소 직접 접근 0건"
+    ],
+    "depends_on": [
+      "0008"
+    ],
+    "db_schema": "읽기/쓰기: 'mp:history:v1' {v:1,data:QuizResult[]} 최신 20건 (useHistory 훅 경유)",
+    "api_contract": "",
+    "dependencies": [],
+    "ui_requirements": "ScreenScaffold + Top(title='진단 기록', 우측 텍스트 버튼 '전체 삭제'). 레이아웃: ListRow 목록(좌측 이모지, contents=캐릭터 이름, subtext='2026.08.25 · 절약 100%', withArrow) → 목록 아래 Spacing size={24} → AdSlot 배너. 전체 삭제 AlertDialog: 제목 '기록을 모두 지울까요?', 본문 '지운 기록은 되돌릴 수 없어요', 왼쪽 '닫기' / 오른쪽 '삭제하기'. 상태: 로딩(Skeleton 3행) / 목록 / 빈 상태(EmptyState + '진단 시작하기'). 터치 타깃 44px 이상, 색상 TDS 토큰."
+  },
+  {
+    "id": "0019",
+    "title": "라우팅 연결 + FloatingTabBar 조건부 노출",
+    "epic": "4",
+    "task": {
+      "description": "App.tsx에서 BrowserRouter 라우트 7개(/, /quiz, /result, /report, /share, /compat, /history)를 연결하고 알 수 없는 경로는 /로 리다이렉트한다. 템플릿 FloatingTabBar를 홈·궁합·기록 3탭으로 배선하되 몰입 화면(/quiz, /share)에서는 숨긴다. 전역 Provider(광고 SDK 등) 배선도 이 패킷이 담당한다.",
+      "acceptance_criteria": [
+        "/, /quiz, /result, /report, /share, /compat, /history 7개 경로가 각각 Home, Quiz, Result, Report, Share, Compat, History 페이지를 렌더하고 어느 경로로 직접 진입해도 흰 화면·크래시가 없다",
+        "정의되지 않은 경로(예: /zzz) 진입 시 / 로 리다이렉트된다",
+        "FloatingTabBar가 홈(/)·궁합(/compat)·기록(/history) 3탭으로 렌더되고 현재 경로 탭이 컬러 틴트로 활성 표시되며, /quiz와 /share에서는 렌더되지 않는다",
+        "전역 Provider와 라우터가 App.tsx 한 파일에서만 배선되고 src/main.tsx는 수정되지 않는다(@AI:ANCHOR 유지)",
+        "npm run build가 에러 0으로 성공하고 npx tsc --noEmit이 통과한다"
+      ]
+    },
+    "covers": [
+      "F7-AC-2",
+      "F7-AC-3",
+      "F8-AC-1"
+    ],
+    "files": [
+      "src/App.tsx"
+    ],
+    "definition_of_done": [
+      "빌드 성공",
+      "7개 라우트 직접 진입 크래시 0건",
+      "main.tsx 미수정"
+    ],
+    "depends_on": [
+      "0011",
+      "0012",
+      "0014",
+      "0015",
+      "0016",
+      "0017",
+      "0018"
+    ],
+    "db_schema": "",
+    "api_contract": "",
+    "dependencies": [
+      "react-router-dom"
+    ],
+    "ui_requirements": "BrowserRouter + Routes 구성. FloatingTabBar(템플릿 제공, src/components/FloatingTabBar) 3탭: 홈 / 궁합 / 기록 — 각 탭 아이콘은 Asset.ContentIcon, 활성 탭만 컬러 틴트. 탭바는 position: fixed 하단, paddingBottom: 'calc(12px + env(safe-area-inset-bottom))'. /quiz, /share에서는 탭바 미노출(몰입 화면). 페이지 전환 시 스크롤 최상단 복원. HEX 색상 0건, TDS 테마 토큰만 사용."
+  },
+  {
+    "id": "0020",
+    "title": "컴플라이언스 가드 + 고지 컴포넌트 + 정적 검사",
+    "epic": "Epic 4. 통합 + 컴플라이언스",
+    "task": {
+      "description": "검수 반려 요인을 차단하는 마지막 폴리시 패킷. 오해 방지 고지 컴포넌트(DisclaimerNotice)와 최초 1회 안내 다이얼로그 훅(useDisclaimerGate)을 만들고, 소스 전체를 스캔해 금지 SDK·HEX 색상·설치 유도 문구·console 잔존을 잡는 정적 검사 테스트를 추가한다. App.tsx는 수정하지 않는다.",
+      "acceptance_criteria": [
+        "DisclaimerNotice가 '재미로 보는 성향 테스트이며 금융 투자 자문이 아닙니다' 문구를 Paragraph.Text(작은 크기, TDS 회색 토큰)로 렌더하고 외부 링크를 포함하지 않는다",
+        "useDisclaimerGate()가 flags.disclaimerSeen===false일 때만 AlertDialog(왼쪽 '닫기')를 1회 노출하고 확인 후 markDisclaimerSeen()으로 저장해 재방문 시 다시 뜨지 않는다",
+        "정적 검사 테스트가 src/** 전체에서 stripe·iamport·bootpay·tosspayments·admob·adsense·kakao·firebase/auth·next/ 문자열 0건, shadcn/mui/antd/chakra import 0건을 검증하고 통과한다",
+        "정적 검사 테스트가 src/** 에서 '#rrggbb' 형태 HEX 색상 0건, '설치'·'다운로드'·'스토어' 유도 문구 0건, console.log/console.error 0건을 검증하고 통과한다",
+        "npm run build 성공 + npx vitest run 전체 green 이며 이 패킷은 src/App.tsx와 src/main.tsx를 수정하지 않는다"
+      ]
+    },
+    "covers": [
+      "F8-AC-1",
+      "F8-AC-2",
+      "F8-AC-3",
+      "F8-AC-4"
+    ],
+    "files": [
+      "src/components/DisclaimerNotice.tsx",
+      "src/hooks/useDisclaimerGate.ts",
+      "src/lib/__tests__/compliance.test.ts",
+      ".env.example"
+    ],
+    "definition_of_done": [
+      "전체 테스트 green",
+      "빌드 성공",
+      "App.tsx/main.tsx 미수정"
+    ],
+    "depends_on": [
+      "0008"
+    ],
+    "db_schema": "interface AppFlags { onboardingSeen: boolean; lastResultId: string | null; disclaimerSeen: boolean } → localStorage key: 'mp:flags:v1'",
+    "api_contract": "",
+    "dependencies": [],
+    "ui_requirements": "DisclaimerNotice: Paragraph.Text 1줄, 색상 var(--tds-color-*) 회색 토큰, 위아래 Spacing size={12}. 안내 다이얼로그(AlertDialog): 제목 '결과는 참고용이에요', 본문 '문항 응답을 규칙에 따라 계산한 결과이며 금융 투자 자문이 아니에요', 왼쪽 버튼 '닫기' / 오른쪽 '확인했어요'. 최초 1회만 노출. .env.example에 VITE_TOSS_AD_GROUP_ID, VITE_TOSS_AD_SLOT_ID 키와 앱인토스 콘솔 발급 안내 주석 기재."
+  }
+]
