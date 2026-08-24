@@ -19,11 +19,6 @@
 
 If any check fails, fix it BEFORE completing. Finishing with known errors is a failure.
 
-## CRITICAL: 코딩 에이전트 실행 가드레일 (도구 사용)
-- 파일 수정은 반드시 Read/Edit/Write 도구로만 한다 — `sed`/`awk` 일괄치환, 셸 리다이렉트(`>`, `<<EOF`)로 파일을 만들거나 고치지 마라.
-- 네트워크 호출 금지 — `curl`, `wget`으로 외부 URL을 받아오지 마라. `python3` 인라인 스크립트로 파일을 조작하지 마라.
-- 아이콘은 TDS `Asset.ContentIcon`만 사용 — 이모지/자작 SVG 아이콘 세트로 대체하지 마라.
-
 ## 카피 규칙 — AI 냄새 금지 (토스 톤)
 모든 UI 텍스트(제목·본문·버튼·에러·빈 상태·placeholder)에 적용:
 - **금지 표현**: "환영합니다", "~해 보세요!"류 권유 남발, "당신(의)", "멋진/놀라운/완벽한", 번역투("~하는 것을 도와드립니다"), 기능 나열식 소개("이 앱은 ~을 제공합니다")
