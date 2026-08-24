@@ -1,6 +1,6 @@
 import { describe, it, expect, vi } from "vitest";
 import { makeShareCode, parseShareCode, generateShareCode } from "@/lib/shareCode";
-import type { Result } from "@/lib/contract";
+import type { QuizResult } from "@/lib/types";
 
 describe("makeShareCode", () => {
   it("generates 'MP1-FPC-2' for FPC", () => {
@@ -46,26 +46,27 @@ describe("parseShareCode", () => {
 });
 
 describe("generateShareCode", () => {
-  const baseResult: Result = {
+  const baseResult: QuizResult = {
     id: "r1",
-    timestamp: 0,
-    answers: [],
-    scores: { A1: 4, A2: 4, A3: 4 },
-    shareCode: "",
+    createdAt: 0,
+    answers: [1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1],
+    axisScores: [
+      { axis: "A1", score: 4, letter: "F", percent: 100 },
+      { axis: "A2", score: 4, letter: "P", percent: 100 },
+      { axis: "A3", score: 4, letter: "C", percent: 100 },
+    ],
+    personaCode: "FPC",
+    shareCode: "MP1-FPC-2",
+    reportUnlocked: false,
   };
 
-  it("derives 'MP1-FPC-2' from full-score axes", () => {
+  it("returns the pre-computed shareCode if available", () => {
     expect(generateShareCode(baseResult)).toBe("MP1-FPC-2");
   });
 
-  it("derives the low-letter code when every axis score is below 2", () => {
-    const result: Result = { ...baseResult, scores: { A1: 0, A2: 0, A3: 0 } };
-    expect(generateShareCode(result)).toBe(makeShareCode("SIR"));
-  });
-
-  it("treats a missing axis score as 0 (low letter)", () => {
-    const result: Result = { ...baseResult, scores: { A1: 4 } };
-    expect(generateShareCode(result)).toBe(makeShareCode("FIR"));
+  it("falls back to makeShareCode when shareCode is empty", () => {
+    const result: QuizResult = { ...baseResult, shareCode: "" };
+    expect(generateShareCode(result)).toBe(makeShareCode("FPC"));
   });
 
   it("round-trips through parseShareCode", () => {

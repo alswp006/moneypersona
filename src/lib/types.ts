@@ -83,12 +83,25 @@ export interface AppFlags {
 }
 
 export type ScoreResult =
-  | { success: true; score: number }
-  | { success: false; error: string };
+  | {
+      ok: true;
+      personaCode: PersonaCode;
+      axisScores: [AxisScore, AxisScore, AxisScore];
+    }
+  | {
+      ok: false;
+      reason: string;
+    };
 
 export type StorageResult<T> =
-  | { success: true; data: T }
-  | { success: false; error: string };
+  | {
+      ok: true;
+      data: T;
+    }
+  | {
+      ok: false;
+      reason: "quota" | "parse" | "not_found";
+    };
 
 export type RouteState = {
   "/": undefined;

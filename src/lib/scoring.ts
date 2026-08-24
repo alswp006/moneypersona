@@ -1,5 +1,4 @@
 import type { AxisId, AxisLetter, AxisScore, Persona, PersonaCode } from "@/lib/types";
-import type { Answer, calculateScoreFn } from "@/lib/contract";
 import { PERSONAS } from "@/data/personas";
 
 export type ScoreQuizResult =
@@ -45,18 +44,3 @@ export function getPersona(code: PersonaCode): Persona | null {
   return PERSONAS[code] ?? null;
 }
 
-/**
- * 계약 어댑터 (src/lib/contract.ts의 calculateScoreFn) — questionIds 순서로 answers를
- * 정렬한 뒤 축(A1~A3)별 4문항 합산 점수를 Record로 반환한다. scoreQuiz와 동일한 축
- * 그룹핑(4문항×3축)을 questionId 기반 answers[]에 대해 재사용한다.
- */
-export const calculateScore: calculateScoreFn = (answers: Answer[], questionIds: string[]) => {
-  const valueById = new Map(answers.map((a) => [a.questionId, a.value]));
-  const ordered = questionIds.map((id) => (valueById.get(id) === 1 ? 1 : 0));
-
-  return AXIS_IDS.reduce<Record<string, number>>((scores, axis, i) => {
-    const slice = ordered.slice(i * 4, i * 4 + 4);
-    scores[axis] = slice.reduce<number>((sum, v) => sum + v, 0);
-    return scores;
-  }, {});
-};

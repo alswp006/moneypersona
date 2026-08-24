@@ -1,5 +1,4 @@
-import type { AxisLetter, PersonaCode } from "@/lib/types";
-import type { Result, generateShareCodeFn } from "@/lib/contract";
+import type { AxisLetter, PersonaCode, QuizResult } from "@/lib/types";
 
 const SHARE_CODE_PATTERN = /^MP1([FS][PI][CR])(\d+)$/i;
 
@@ -43,18 +42,6 @@ const AXIS_LETTERS: Record<"A1" | "A2" | "A3", [AxisLetter, AxisLetter]> = {
   A3: ["C", "R"],
 };
 
-/**
- * 계약 어댑터 (src/lib/contract.ts의 generateShareCodeFn) — result.scores(축별 0~4점)를
- * 퍼소나 코드로 환원한 뒤 makeShareCode로 위임한다.
- */
-export const generateShareCode: generateShareCodeFn = (result: Result) => {
-  const code = (["A1", "A2", "A3"] as const)
-    .map((axis) => {
-      const score = result.scores[axis] ?? 0;
-      const [highLetter, lowLetter] = AXIS_LETTERS[axis];
-      return score >= 2 ? highLetter : lowLetter;
-    })
-    .join("") as PersonaCode;
-
-  return makeShareCode(code);
-};
+export function generateShareCode(result: QuizResult): string {
+  return result.shareCode || makeShareCode(result.personaCode);
+}

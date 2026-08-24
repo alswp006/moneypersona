@@ -1,6 +1,5 @@
 import { describe, it, expect, vi } from "vitest";
-import { scoreQuiz, getPersona, calculateScore } from "@/lib/scoring";
-import type { Answer } from "@/lib/contract";
+import { scoreQuiz, getPersona } from "@/lib/scoring";
 
 describe("scoreQuiz", () => {
   it("all 1s → FPC persona, full-score axes", () => {
@@ -43,31 +42,6 @@ describe("scoreQuiz", () => {
     if (!result.ok) throw new Error("expected ok");
     expect(result.personaCode).toBe("FIR");
     expect(result.axisScores[0].percent).toBe(50);
-  });
-});
-
-describe("calculateScore", () => {
-  const questionIds = Array.from({ length: 12 }, (_, i) => `q${i + 1}`);
-
-  it("returns axis scores keyed by axis id, matching scoreQuiz's per-axis sums", () => {
-    const values = [1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1];
-    const answers: Answer[] = questionIds.map((questionId, i) => ({ questionId, value: values[i] }));
-
-    expect(calculateScore(answers, questionIds)).toEqual({ A1: 4, A2: 4, A3: 4 });
-  });
-
-  it("orders answers by questionIds regardless of input array order", () => {
-    const values = [1, 1, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0];
-    const inOrder: Answer[] = questionIds.map((questionId, i) => ({ questionId, value: values[i] }));
-    const shuffled = [...inOrder].reverse();
-
-    expect(calculateScore(shuffled, questionIds)).toEqual(calculateScore(inOrder, questionIds));
-    expect(calculateScore(inOrder, questionIds)).toEqual({ A1: 2, A2: 1, A3: 0 });
-  });
-
-  it("treats a missing/unanswered questionId as 0", () => {
-    const answers: Answer[] = [{ questionId: "q1", value: 1 }];
-    expect(calculateScore(answers, questionIds)).toEqual({ A1: 1, A2: 0, A3: 0 });
   });
 });
 
