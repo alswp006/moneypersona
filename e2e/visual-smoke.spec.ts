@@ -25,7 +25,24 @@ const ROUTES: { path: string; name: string }[] = [
 /** 데이터가 필요한 화면용 localStorage 시드(앱에 맞게 채워라). 앱 스크립트보다 먼저 실행된다. */
 async function seed(page: Page): Promise<void> {
   await page.addInitScript(() => {
-    // window.localStorage.setItem("MY_STORAGE_KEY", JSON.stringify({ /* ... */ }));
+    const result = {
+      id: "r_1_FPC",
+      createdAt: 1,
+      answers: [1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1],
+      axisScores: [
+        { axis: "A1", score: 4, letter: "F", percent: 100 },
+        { axis: "A2", score: 4, letter: "P", percent: 100 },
+        { axis: "A3", score: 4, letter: "C", percent: 100 },
+      ],
+      personaCode: "FPC",
+      shareCode: "MP1-FPC-0",
+      reportUnlocked: false,
+    };
+    window.localStorage.setItem("mp:result:v1", JSON.stringify({ v: 1, data: result }));
+    window.localStorage.setItem(
+      "mp:flags:v1",
+      JSON.stringify({ onboardingSeen: true, lastResultId: result.id, disclaimerSeen: true }),
+    );
   });
 }
 
