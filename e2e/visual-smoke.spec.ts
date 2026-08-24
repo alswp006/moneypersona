@@ -12,8 +12,14 @@ import { test, expect, type Page } from "@playwright/test";
  */
 const ROUTES: { path: string; name: string }[] = [
   { path: "/", name: "home" },
-  // { path: "/result", name: "result" },   // ← 이 앱의 라우트를 추가
-  // { path: "/settings", name: "settings" },
+  { path: "/quiz", name: "quiz" },
+  { path: "/result", name: "result" },
+  { path: "/report", name: "report" },
+  { path: "/share", name: "share" },
+  { path: "/compat", name: "compat" },
+  { path: "/history", name: "history" },
+  // 정의되지 않은 경로 → /로 리다이렉트(흰 화면 대신 홈이 떠야 한다)
+  { path: "/zzz", name: "unknown-redirect" },
 ];
 
 /** 데이터가 필요한 화면용 localStorage 시드(앱에 맞게 채워라). 앱 스크립트보다 먼저 실행된다. */
