@@ -256,6 +256,7 @@ CRITICAL: Before creating any new function, type, or component, check the list a
 - 0003: 8캐릭터 페르소나 콘텐츠 + 무결성 테스트 (files: src/data/personas.ts, src/data/__tests__/personas.test.ts)
 - 0005: 스코어링 엔진 + 공유 코드 생성·파싱 (files: src/lib/scoring.ts, src/lib/shareCode.ts, src/lib/__tests__/scoring.test.ts, src/lib/__tests__/shareCode.test.ts)
 - 0012: 퀴즈 화면 `/quiz` (files: src/pages/Quiz.tsx)
+- 0014: 결과 화면 `/result` 조립 (files: src/pages/Result.tsx)
 
 ## Available exports from existing files
 // src/App.tsx
