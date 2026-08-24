@@ -1,0 +1,23 @@
+{
+  "koreanName": "머니페르소나",
+  "englishName": "MoneyPersona",
+  "appName": "money-persona",
+  "ageRating": "만 19세 이상",
+  "supportEmail": "support@aifactory.dev",
+  "category": {
+    "primary": "금융",
+    "secondary": "진단/테스트"
+  },
+  "subtitle": "12문항으로 나의 소비 성향 진단",
+  "description": "간단한 12개 질문에 답하면 당신의 소비 성향을 8가지 재미있는 캐릭터로 진단해줍니다. 결과 화면에서는 자신의 캐릭터에 맞는 절약 팁을 확인하고, 이미지로 만들어 카톡과 SNS에 공유할 수 있습니다. 친구의 결과와 비교하며 서로의 소비 성향 궁합도 알아보세요. 리워드 광고를 시청하면 더 자세한 분석 리포트도 공개됩니다.",
+  "searchKeywords": [
+    "소비성향 진단",
+    "재테크 테스트",
+    "MBTI",
+    "성향 테스트",
+    "절약팁",
+    "금융 진단",
+    "저축 습관",
+    "캐릭터 테스트"
+  ]
+}
