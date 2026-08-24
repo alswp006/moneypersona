@@ -1,11 +1,5 @@
 # CLAUDE.md — 앱인토스 미니앱 코딩 규칙
 
-## CRITICAL: 도구 사용 가드레일
-- 파일 수정은 반드시 Read/Edit/Write 도구로만 하라 — 셸에서 sed/awk로 일괄치환하지 마라(맥락 없는 치환은 문법을 깨뜨린다).
-- curl/wget으로 외부 네트워크를 호출하지 마라 — 이 환경엔 네트워크가 없고, 실패한 호출을 재시도하며 턴만 소진한다.
-- python3 인라인 스크립트로 파일을 조작하지 마라 — Edit/Write 도구를 써라.
-- 아이콘은 TDS `Asset.ContentIcon`만 써라 — 이모지나 커스텀 SVG 아이콘 라이브러리 금지.
-
 ## MANDATORY: Pre-submission Checklist (run BEFORE finishing)
 1. **Run `npx tsc --noEmit`** — fix ALL TypeScript errors before finishing
 2. **Run `npx vitest run`** (if test file exists) — fix failing tests
