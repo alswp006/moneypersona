@@ -20,30 +20,7 @@
 // 남긴 것: 금지 패턴 스캔. 서브프로세스 0·순수 정규식이라 사실상 무료이고,
 // 파이프라인에 대응물이 없는 패턴들(button 중첩, placeholder 없는 TextField,
 // 맨텍스트 로딩)을 유일하게 잡는다.
-import { readFileSync, readdirSync, statSync, existsSync } from "node:fs";
-import { join, extname } from "node:path";
-import { scanContent } from "./forbidden-patterns.mjs";
-
-function walk(dir, out = []) {
-  for (const name of readdirSync(dir)) {
-    if (name === "node_modules" || name === "dist" || name.startsWith(".")) continue;
-    const full = join(dir, name);
-    if (statSync(full).isDirectory()) walk(full, out);
-    else if ([".tsx", ".ts", ".jsx", ".css"].includes(extname(name))) out.push(full);
-  }
-  return out;
-}
-
-function scanSrc(root) {
-  const srcDir = join(root, "src");
-  if (!existsSync(srcDir)) return [];
-  const out = [];
-  for (const file of walk(srcDir)) {
-    const rel = file.slice(root.length + 1);
-    for (const v of scanContent(readFileSync(file, "utf8"), rel)) out.push({ ...v, file: rel });
-  }
-  return out;
-}
+import { scanSrc } from "./forbidden-patterns.mjs";
 
 /** stdin의 hook 페이로드를 **읽고 파싱한다**(드레인만 하면 stop_hook_active를 못 본다). */
 async function readHookPayload() {

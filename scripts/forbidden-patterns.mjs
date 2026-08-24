@@ -1,5 +1,8 @@
-// 금지 패턴 단일 소스. precheck(high만)·finish-gate(전체)가 공유. 의존성 0(순수 node ESM).
+// 금지 패턴 단일 소스. precheck(high만)·finish-gate(전체)·lint(npm run lint)가 공유. 의존성 0(순수 node ESM).
 // 각 패턴: { id, confidence, severity, appliesTo(file), message, scan(content)=>[{line,text}] }
+
+import { readFileSync, readdirSync, statSync, existsSync } from "node:fs";
+import { join, extname } from "node:path";
 
 function hasAllowMarker(line) {
   return /\/\/\s*gate-allow:/.test(line);
@@ -133,6 +136,28 @@ export function scanContent(content, filePath, opts = {}) {
       if (hasAllowMarker(lines[v.line - 1] ?? "")) continue;
       out.push({ patternId: p.id, line: v.line, text: v.text, message: p.message, confidence: p.confidence, severity: p.severity });
     }
+  }
+  return out;
+}
+
+function walk(dir, out = []) {
+  for (const name of readdirSync(dir)) {
+    if (name === "node_modules" || name === "dist" || name.startsWith(".")) continue;
+    const full = join(dir, name);
+    if (statSync(full).isDirectory()) walk(full, out);
+    else if ([".tsx", ".ts", ".jsx", ".css"].includes(extname(name))) out.push(full);
+  }
+  return out;
+}
+
+/** src/ 전체를 재귀 스캔해 금지 패턴 위반을 모은다. finish-gate·lint가 공유. */
+export function scanSrc(root, opts = {}) {
+  const srcDir = join(root, "src");
+  if (!existsSync(srcDir)) return [];
+  const out = [];
+  for (const file of walk(srcDir)) {
+    const rel = file.slice(root.length + 1);
+    for (const v of scanContent(readFileSync(file, "utf8"), rel, opts)) out.push({ ...v, file: rel });
   }
   return out;
 }

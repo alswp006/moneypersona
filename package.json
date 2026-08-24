@@ -9,12 +9,14 @@
     "postbuild": "node scripts/verify-no-dev-leak.mjs dist",
     "preview": "vite preview",
     "typecheck": "tsc --noEmit",
+    "lint": "node scripts/lint.mjs",
     "test": "vitest run",
     "test:watch": "vitest",
     "test:visual": "playwright test",
     "test:visual:update": "playwright test --update-snapshots",
     "gate": "node scripts/finish-gate.mjs",
-    "measure:tds": "node scripts/tds-density.mjs src"
+    "measure:tds": "node scripts/tds-density.mjs src",
+    "verify": "npm run typecheck && npm run lint && npm run build && npx vitest run && node scripts/compliance-check.mjs"
   },
   "dependencies": {
     "react": "^18.0.0",
