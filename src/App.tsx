@@ -79,11 +79,8 @@ function logScreen(pathname: string) {
   }
 }
 
-/**
- * 라우트가 바뀔 때마다 스크롤을 최상단으로 되돌리고 화면 진입 로그를 남긴다.
- * `window.scrollTo` 대신 scrollTop을 직접 쓰는 이유: jsdom에서 "Not implemented"
- * 콘솔 에러가 찍히지 않게 하기 위함(검수 기준 console.error 0건).
- */
+// jsdom에서 window.scrollTo가 "Not implemented" 에러를 던지므로 scrollTop을 직접 조작
+// 라우트 변경 시 스크롤 초기화 + 화면 진입 로그
 function useRouteEffects(pathname: string) {
   useEffect(() => {
     initAdSdk();
