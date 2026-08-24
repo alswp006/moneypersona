@@ -5,62 +5,62 @@
  * 타입을 그대로 가정해도 된다. 추측이 어긋나 병합에서 무너지는 것을 막기 위한 파일이다.
  */
 
-/** 12문항 정적 콘텐츠 구조 (구현: 패킷 0002) */
-export type Question = { id: string; text: string; options: { value: number; label: string }[] };
+/** 12문항 콘텐츠에서 정의; 0009(useQuizFlow), 0012(Quiz)에서 사용 (구현: 패킷 0002) */
+export type Question = { id: string; text: string; options: string[]; axis: string };
 
-/** 8캐릭터 페르소나 구조 (구현: 패킷 0003) */
-export type Persona = { id: string; name: string; description: string; emoji: string };
+/** 정적 질문 배열 내보내기 (구현: 패킷 0002) */
+export type questionsFn = () => Question[];
 
-/** 사용자 답변 원자 단위 (구현: 패킷 0001) */
-export type Answer = { questionId: string; value: number };
+/** 8캐릭터 페르소나 콘텐츠; 0005(scoring), 0007(compatibility), 0013-0014(result)에서 사용 (구현: 패킷 0003) */
+export type Persona = { id: string; name: string; description: string; traits: string[] };
 
-/** 스코어링 결과 최종 형식 (구현: 패킷 0005) */
-export type Result = { id: string; timestamp: number; answers: Answer[]; scores: Record<string, number>; shareCode: string };
+/** 정적 페르소나 배열 내보내기 (구현: 패킷 0003) */
+export type personasFn = () => Persona[];
 
-/** 궁합 계산 결과 (구현: 패킷 0007) */
-export type CompatResult = { id: string; timestamp: number; persona1Id: string; persona2Id: string; score: number };
+/** 축별 스코어; 0005, 0008(useResult), 0014(Result)에서 공유 (구현: 패킷 0001) */
+export type AxisScores = { [axisId: string]: number };
 
-/** 스코어링 엔진 공개 함수 (구현: 패킷 0005) */
-export type calculateScoreFn = (answers: Answer[], questionIds: string[]) => Record<string, number>;
+/** 시험 결과 엔티티; 0006(resultRepo), 0008(useResult), 0014(Result), 0016(shareImage)에서 사용 (구현: 패킷 0001) */
+export type QuizResult = { id: string; timestamp: number; answers: string[]; scores: AxisScores; personaId: string; code?: string };
 
-/** 공유 코드 생성 (구현: 패킷 0005) */
-export type generateShareCodeFn = (result: Result) => string;
+/** 선택지 배열로부터 축별 스코어 계산 (구현: 패킷 0005) */
+export type calculateScoresFn = (answers: string[]) => AxisScores;
 
-/** 공유 코드 파싱 (구현: 패킷 0005) */
-export type parseShareCodeFn = (code: string) => Result | null;
+/** 결과를 공유 코드로 압축 (구현: 패킷 0005) */
+export type generateShareCodeFn = (result: QuizResult) => string;
 
-/** 결과 리포지토리 저장 (구현: 패킷 0006) */
-export type saveResultFn = (result: Result) => Promise<void>;
+/** 공유 코드를 결과로 복원 (0017 호환성 비교에서 필요) (구현: 패킷 0005) */
+export type parseShareCodeFn = (code: string) => QuizResult | null;
 
-/** 결과 리포지토리 조회 (구현: 패킷 0006) */
-export type getResultFn = (id: string) => Promise<Result | null>;
+/** 두 결과 간 궁합도 계산 (0-100) (구현: 패킷 0007) */
+export type calculateCompatibilityFn = (result1: QuizResult, result2: QuizResult) => number;
 
-/** 진행 상태 조회 (구현: 패킷 0006) */
-export type getProgressFn = () => Promise<{ currentQuestionIndex: number; answers: Answer[] } | null>;
+/** 결과 영속성; 0008(useResult)에서 사용 (구현: 패킷 0006) */
+export type ResultRepository = { save(result: QuizResult): Promise<void>; get(id: string): Promise<QuizResult | null>; list(): Promise<QuizResult[]> };
 
-/** 결과 훅 공개 인터페이스 (구현: 패킷 0008) */
-export type useResultFn = () => { result: Result | null; saveResult: (r: Result) => Promise<void>; clear: () => Promise<void> };
+/** 진행 상태 저장; 0009(useQuizFlow)에서 사용 (구현: 패킷 0006) */
+export type ProgressRepository = { save(progress: { answers: string[] }): Promise<void>; get(): Promise<{ answers: string[] } | null>; clear(): Promise<void> };
 
-/** 히스토리 훅 공개 인터페이스 (구현: 패킷 0008) */
-export type useHistoryFn = () => { history: Result[]; clear: () => Promise<void> };
+/** 기능 플래그/게이트 (0020 컴플라이언스 등); 0008(useFlags)에서 사용 (구현: 패킷 0006) */
+export type FlagsRepository = { get(key: string): Promise<boolean>; set(key: string, value: boolean): Promise<void> };
 
-/** 플래그 훅 공개 인터페이스 (구현: 패킷 0008) */
-export type useFlagsFn = () => { hasCompletedDisclaimer: boolean; setDisclaimerSeen: () => Promise<void> };
+/** 궁합 기록 저장; 0017(Compat)에서 사용 (구현: 패킷 0007) */
+export type CompatibilityRepository = { save(compat: { persona1Id: string; persona2Id: string; score: number }): Promise<void>; list(): Promise<{ persona1Id: string; persona2Id: string; score: number }[]> };
 
-/** 퀴즈 진행 훅 공개 인터페이스 (구현: 패킷 0009) */
-export type useQuizFlowFn = () => { currentIndex: number; answers: Answer[]; next: (value: number) => void; finish: () => Promise<Result> };
+/** 현재 결과 상태 훅; 0011-0018 페이지들에서 사용 (구현: 패킷 0008) */
+export type useResultFn = () => { result: QuizResult | null; save(r: QuizResult): Promise<void>; clear(): Promise<void> };
 
-/** 컴플라이언스 게이트 훅 (구현: 패킷 0020) */
-export type useDisclaimerGateFn = () => { isGated: boolean; acknowledge: () => void };
+/** 결과 이력 훅; 0018(History) 등에서 사용 (구현: 패킷 0008) */
+export type useHistoryFn = () => { history: QuizResult[]; reload(): Promise<void> };
 
-/** 궁합 계산 엔진 (구현: 패킷 0007) */
-export type calculateCompatibilityFn = (persona1Id: string, persona2Id: string) => number;
+/** 플래그 상태 훅; 0020(compliance) 등에서 사용 (구현: 패킷 0008) */
+export type useFlagsFn = () => { get(key: string): Promise<boolean>; set(key: string, value: boolean): Promise<void> };
 
-/** 공용 시각화 컴포넌트 props (구현: 패킷 0010) */
-export type MiniBarProps = { label: string; value: number; max: number; color?: string };
+/** 퀴즈 진행 상태 훅; 0012(Quiz)에서 사용 (구현: 패킷 0009) */
+export type useQuizFlowFn = () => { currentIdx: number; answers: string[]; setAnswer(idx: number, val: string): void; next(): void; back(): void; submit(): Promise<QuizResult>; restore(): Promise<void> };
 
-/** 라우팅 상태 계약 (구현: 패킷 0001) */
-export type RouteState = { path: string; params?: Record<string, string | number> };
+/** 미니 바 차트 컴포넌트; 0014-0017(결과/호환성 화면)에서 재사용 (구현: 패킷 0010) */
+export type MiniBarProps = { label: string; value: number; maxValue: number; color?: string };
 
-/** 안전 저장소 공개 인터페이스 (구현: 패킷 0004) */
-export type SafeStorageApi = { getItem: (key: string) => Promise<string | null>; setItem: (key: string, value: string) => Promise<void>; removeItem: (key: string) => Promise<void> };
+/** 결과를 이미지로 생성; 0016(Share)에서 사용 (구현: 패킷 0016) */
+export type generateShareImageFn = (result: QuizResult, personas: Persona[]) => Promise<Blob>;
