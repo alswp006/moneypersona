@@ -60,12 +60,12 @@ describe("Packet 0005: Scoring Engine + Share Code", () => {
 
     // All should have ok:true
     results.forEach((r, idx) => {
-      expect(r.ok).toBe(true, `Call ${idx} failed`);
+      expect(r.ok, `Call ${idx} failed`).toBe(true);
     });
 
     // All should deep-equal the first result
     results.forEach((r, idx) => {
-      expect(r).toEqual(firstResult, `Call ${idx} differs from first result`);
+      expect(r, `Call ${idx} differs from first result`).toEqual(firstResult);
     });
   });
 
@@ -276,7 +276,7 @@ describe("Packet 0005: Scoring Engine + Share Code", () => {
     const formats = ["MP1-FPC-2", "mp1-fpc-2", "MP1FPC2", "mp1fpc2"];
     formats.forEach((format) => {
       const result = parseShareCode(format);
-      expect(result.ok).toBe(true, `Format "${format}" should be valid`);
+      expect(result.ok, `Format "${format}" should be valid`).toBe(true);
     });
   });
 });

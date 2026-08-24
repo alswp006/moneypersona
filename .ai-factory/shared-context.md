@@ -253,9 +253,7 @@ CRITICAL: Before creating any new function, type, or component, check the list a
 - heal-1-03: 품질 게이트 로컬 재현 스크립트 + 컴플라이언스 정적 검사 통과 (files: package.json, scripts/compliance-check.mjs, src/components/DisclaimerNotice.tsx)
 - heal-1-02: 코딩 에이전트 실행 가드레일 + 라우팅/홈 최소 배선 복구 (files: .claude/settings.json, CLAUDE.md, src/App.tsx, src/pages/HomePage.tsx)
 - 0002: 12문항 정적 콘텐츠 + 무결성 테스트 (files: src/data/questions.ts, src/data/__tests__/questions.test.ts)
-
-## TDD 상태
-⚠️ TDD 테스트 파일 자동 작성에 실패했습니다. 소스 코드를 작성하기 전에 `src/__tests__/packet-XXXX.test.ts` 파일에 AC 기반 테스트를 먼저 작성하세요 (TDD red phase). 테스트 작성 후 구현하세요.
+- 0003: 8캐릭터 페르소나 콘텐츠 + 무결성 테스트 (files: src/data/personas.ts, src/data/__tests__/personas.test.ts)
 
 ## Available exports from existing files
 // src/App.tsx
@@ -311,6 +309,9 @@ export function TossPurchase({
 // src/components/TossRewardAd.tsx
 export function TossRewardAd({
 
+// src/data/personas.ts
+export const PERSONAS: Record<PersonaCode, Persona> = {
+
 // src/data/questions.ts
 export const QUESTIONS: readonly Question[] = [
 export function getQuestion(index: number): Question | null {
@@ -325,8 +326,7 @@ export function useDisclaimerGate(): DisclaimerGate {
 // src/lib/contract.ts
 export type Question = { id: string; text: string; options: { value: number; label: string }[] };
 export type Persona = { id: string; name: string; description: string; emoji: string };
-export type Answer = { questionId: string; value: number };
-export type Result = { id: string; tim
+export type Answe
 
 ## Memory Index (자동 학습 — 힌트로만 사용, 실제 코드 확인 필수)
 
